@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+option csharp_namespace = "DurakServer";
+
+package durak;
+
+service DurakGame {
+  rpc DurakStreaming (stream DurakRequest) returns (stream DurakReply);
+}
+
+message DurakRequest {
+	oneof Request {
+		PlayRequest playRequest = 1;
+		TurnRequest turnRequest = 2;
+		EndAttackRequest endAttackRequest = 3;
+		EndDefenceRequest endDefenceRequest = 4;
+		EndAddingRequest endAddingRequest = 5;
+	}
+}
+
+message EndAttackRequest {
+}
+
+message EndDefenceRequest {
+}
+
+message EndAddingRequest {
+}
+
+message PlayRequest {
+}
+
+message TurnRequest {
+	Card card = 1;
+}
+
+message DurakReply {
+	oneof Reply {
+		LobbyReply lobbyReply = 1;
+		TurnReply turnReply = 2;
+		EndAttackReply endAttackReply = 3;
+		EndDefenceReply endDefenceReply = 4;
+		EndAddingReply endAddingReply = 5;
+	}
+}
+
+message LobbyReply {
+	DurakNetPlayer iPlayer = 1;
+	repeated DurakNetPlayer enemyPlayers = 2;
+	repeated Card deckBox = 3;
+	Card trump = 4;
+}
+
+message TurnReply {
+	Card card = 1;
+	Status status = 2;
+}
+
+message EndAttackReply {
+	DurakNetPlayer iPlayer = 1;
+	DurakNetPlayer enemyPlayer = 2;
+}
+
+message EndDefenceReply {
+	DurakNetPlayer iPlayer = 1;
+	DurakNetPlayer enemyPlayer = 2;
+}
+
+message EndAddingReply {
+	DurakNetPlayer iPlayer = 1;
+	DurakNetPlayer enemyPlayer = 2;
+}
+ 
+message DurakNetPlayer {
+	string username = 1;
+	repeated Card hand = 2;
+	Role role = 3;
+}
+
+message Card {
+	Rank rank = 1;
+	Suit suit = 2;
+}
+
+enum Rank {
+	None = 0;
+	Six = 6;
+	Seven = 7;
+	Eight = 8;
+	Nine = 9;
+	Ten = 10;
+	Jack = 11;
+	Queen = 12;
+	King = 13;
+	Ace = 14;
+}
+
+enum Suit {
+	Club = 0;
+	Diamond = 1;
+	Heart = 2;
+	Spade = 3;
+}
+
+enum Role {
+	Attacker = 0;
+	Defender = 1;
+	Adder = 2;
+	Waiter = 3;
+	Inactive = 4;
+}
+
+enum Status {
+	canNothing = 0;
+	canAttack = 1;
+	canDefence = 2;
+	canPass = 3;
+}
