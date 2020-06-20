@@ -191,48 +191,58 @@ namespace DurakServer.Adapters
                 }
 
                 player.Hand.Remove(card);
-                
+
                 foreach (var somePlayer in lobby.Players)
                 {
-                        switch (somePlayer.Role)
-                        {
-                            case Role.Attacker:
-                                {
-                                    if (lobby.River.Attacker.Count == lobby.River.Defender.Count &&
-                                        lobby.River.Attacker.Count > 0)
-                                    {
-                                        reply.TurnReply.Status = Status.CanAttack;
-                                        await somePlayer.DurakStreamReply.WriteAsync(reply);
-                                    }
-                                    else if (lobby.River.Attacker.Count > lobby.River.Defender.Count)
-                                    {
-                                        reply.TurnReply.Status = Status.CanNothing;
-                                        await somePlayer.DurakStreamReply.WriteAsync(reply);
-                                    }
-                                }
-                                break;
-                            case Role.Defender:
-                                {
-                                    if (lobby.River.Attacker.Count > lobby.River.Defender.Count)
-                                    {
-                                        reply.TurnReply.Status = Status.CanDefence;
-                                        await somePlayer.DurakStreamReply.WriteAsync(reply);
-                                    }
-                                    else if (lobby.River.Attacker.Count == lobby.River.Defender.Count || lobby.River.Adder.Count > 0)
-                                    {
-                                        reply.TurnReply.Status = Status.CanNothing;
-                                        await somePlayer.DurakStreamReply.WriteAsync(reply);
-                                    } 
-                                }
-                                break;
-                            case Role.Adder:
-                            {
-                                reply.TurnReply.Status = Status.CanPass;
-                                await somePlayer.DurakStreamReply.WriteAsync(reply);
-                            }
-                                break;
-                        }
+                    await somePlayer.DurakStreamReply.WriteAsync(reply);
                 }
+
+                //foreach (var somePlayer in lobby.Players)
+                //{
+                //        switch (somePlayer.Role)
+                //        {
+                //            case Role.Attacker:
+                //                {
+                //                    if (lobby.River.Attacker.Count == lobby.River.Defender.Count &&
+                //                        lobby.River.Attacker.Count > 0)
+                //                    {
+                //                        reply.TurnReply.Status = Status.CanAttack;
+                //                        await somePlayer.DurakStreamReply.WriteAsync(reply);
+                //                    }
+                //                    else if (lobby.River.Attacker.Count > lobby.River.Defender.Count)
+                //                    {
+                //                        reply.TurnReply.Status = Status.CanNothing;
+                //                        await somePlayer.DurakStreamReply.WriteAsync(reply);
+                //                    }
+                //                }
+                //                break;
+                //            case Role.Defender:
+                //                {
+                //                    if (lobby.River.Attacker.Count > lobby.River.Defender.Count)
+                //                    {
+                //                        reply.TurnReply.Status = Status.CanDefence;
+                //                        await somePlayer.DurakStreamReply.WriteAsync(reply);
+                //                    }
+                //                    else if (lobby.River.Attacker.Count == lobby.River.Defender.Count || lobby.River.Adder.Count > 0)
+                //                    {
+                //                        reply.TurnReply.Status = Status.CanNothing;
+                //                        await somePlayer.DurakStreamReply.WriteAsync(reply);
+                //                    } 
+                //                }
+                //                break;
+                //            case Role.Adder:
+                //            {
+                //                reply.TurnReply.Status = Status.CanPass;
+                //                await somePlayer.DurakStreamReply.WriteAsync(reply);
+                //            }
+                //                break;
+                //            case Role.Waiter:
+                //                {
+
+                //                }
+                //                break;
+                //        }
+                //}
         }
         public async Task HandleEndAttack(Lobby lobby)
         {
