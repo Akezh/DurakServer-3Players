@@ -248,15 +248,15 @@ namespace DurakServer.Adapters
         {
             foreach (var player in lobby.Players)
             {
-                FillHand(lobby.DeckBox, player);
+                //FillHand(lobby.DeckBox, player);
                 switch (player.Role)
                 {
                     case Role.Attacker:
                     {
-                        player.Role = Role.Defender;
+                        player.Role = Role.Waiter;
                     }
                         break;
-                    case Role.Defender:
+                    case Role.Waiter:
                     {
                         player.Role = Role.Attacker;
                     }
@@ -264,15 +264,11 @@ namespace DurakServer.Adapters
                 }
             }
 
-            lobby.River.Attacker.Clear();
-            lobby.River.Defender.Clear();
+            //lobby.River.Attacker.Clear();
+            //lobby.River.Defender.Clear();
 
             foreach (var player in lobby.Players)
             {
-                var enemyPlayer = lobby.Players.FirstOrDefault(x => !x.Username.Equals(player.Username));
-
-                Debug.Assert(enemyPlayer != null, nameof(enemyPlayer) + " != null");
-
                 var reply = new DurakReply
                 {
                     EndAttackReply = new EndAttackReply
@@ -282,16 +278,24 @@ namespace DurakServer.Adapters
                             Role = player.Role,
                             Username = player.Username,
                         },
-                        EnemyPlayer = new DurakNetPlayer
-                        {
-                            Role = enemyPlayer.Role,
-                            Username = enemyPlayer.Username,
-                        }
                     }
                 };
-
                 reply.EndAttackReply.IPlayer.Hand.AddRange(player.Hand);
-                reply.EndAttackReply.EnemyPlayer.Hand.AddRange(enemyPlayer.Hand);
+
+
+                foreach (var enemyPlayer in lobby.Players)
+                {
+                    if (enemyPlayer.Username != player.Username)
+                    {
+                        DurakNetPlayer EnemyPlayer = new DurakNetPlayer
+                        {
+                            Role = enemyPlayer.Role,
+                            Username = enemyPlayer.Username
+                        };
+                        EnemyPlayer.Hand.AddRange(enemyPlayer.Hand);
+                        reply.EndAttackReply.EnemyPlayers.Add(EnemyPlayer);
+                    }
+                }
 
                 await player.DurakStreamReply.WriteAsync(reply);
             }
