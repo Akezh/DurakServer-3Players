@@ -53,12 +53,11 @@ message LobbyReply {
 
 message TurnReply {
 	Card card = 1;
-	Status status = 2;
 }
 
 message EndAttackReply {
 	DurakNetPlayer iPlayer = 1;
-	DurakNetPlayer enemyPlayer = 2;
+	repeated DurakNetPlayer enemyPlayers = 2;
 }
 
 message EndDefenceReply {
