@@ -62,12 +62,12 @@ message EndAttackReply {
 
 message EndDefenceReply {
 	DurakNetPlayer iPlayer = 1;
-	DurakNetPlayer enemyPlayer = 2;
+	repeated DurakNetPlayer enemyPlayers = 2;
 }
 
 message EndAddingReply {
 	DurakNetPlayer iPlayer = 1;
-	DurakNetPlayer enemyPlayer = 2;
+	repeated DurakNetPlayer enemyPlayers = 2;
 }
  
 message DurakNetPlayer {

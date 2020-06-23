@@ -25,6 +25,7 @@ namespace DurakServer.Adapters
     {
         private readonly IDurakLobbyProvider durakLobbyProvider;
         private static int _endAttackStep = 1;
+        private static int _endAddingStep = 1;
         private static int _prevRiverCount = 0;
         public DurakLobbyAdapter(IDurakLobbyProvider durakLobbyProvider)
         {
@@ -426,17 +427,11 @@ namespace DurakServer.Adapters
         public async Task HandleEndDefence(Lobby lobby)
         {
             foreach (var player in lobby.Players)
-            {
-                if (player.Role == Role.Attacker)
-                {
+                if (player.Role == Role.Attacker) 
                     player.Role = Role.Adder;
-                }
-            }
 
             foreach (var player in lobby.Players)
             {
-                var enemyPlayer = lobby.Players.FirstOrDefault(x => !x.Username.Equals(player.Username));
-
                 var reply = new DurakReply
                 {
                     EndDefenceReply = new EndDefenceReply
@@ -446,67 +441,115 @@ namespace DurakServer.Adapters
                             Role = player.Role,
                             Username = player.Username,
                         },
-                        EnemyPlayer = new DurakNetPlayer
-                        {
-                            Role = enemyPlayer.Role,
-                            Username = enemyPlayer.Username,
-                        }
                     }
                 };
-
                 reply.EndDefenceReply.IPlayer.Hand.AddRange(player.Hand);
-                reply.EndDefenceReply.EnemyPlayer.Hand.AddRange(enemyPlayer.Hand);
+
+                foreach (var enemyPlayer in lobby.Players)
+                {
+                    if (enemyPlayer.Username != player.Username)
+                    {
+                        DurakNetPlayer EnemyPlayer = new DurakNetPlayer
+                        {
+                            Role = enemyPlayer.Role,
+                            Username = enemyPlayer.Username
+                        };
+                        EnemyPlayer.Hand.AddRange(enemyPlayer.Hand);
+                        reply.EndDefenceReply.EnemyPlayers.Add(EnemyPlayer);
+                    }
+                }
 
                 await player.DurakStreamReply.WriteAsync(reply);
             }
         }
         public async Task HandleEndAdding(Lobby lobby)
         {
-            foreach (var player in lobby.Players)
+            switch (_endAddingStep)
             {
-                if (player.Role == Role.Defender)
+                case 1:
                 {
-                    player.Hand.AddRange(lobby.River.Attacker);
-                    player.Hand.AddRange(lobby.River.Defender);
-                    player.Hand.AddRange(lobby.River.Adder);
-                }
+                    foreach (var player in lobby.Players)
+                    {
+                        switch (player.Role)
+                        {
+                            case Role.Adder:
+                                player.Role = Role.Waiter;
+                                break;
+                            case Role.Waiter:
+                                player.Role = Role.Adder;
+                                break;
+                            case Role.FormerAttacker:
+                                player.Role = Role.Adder;
+                                break;
+                        }
+                    }
 
-                if (player.Role == Role.Adder)
-                {
-                    player.Role = Role.Attacker;
+                    _endAddingStep = 2;
                 }
-                FillHand(lobby.DeckBox, player);
+                    break;
+                case 2:
+                    {
+                        foreach (var player in lobby.Players)
+                        {
+                            switch (player.Role)
+                            {
+                                case Role.Defender: 
+                                    {
+                                        player.Hand.AddRange(lobby.River.Attacker);
+                                        player.Hand.AddRange(lobby.River.Defender);
+                                        player.Hand.AddRange(lobby.River.Adder);
+                                    }
+                                    break;
+                                case Role.Adder:
+                                    {
+                                        player.Role = Role.Attacker;
+                                    }
+                                    break;
+                            }
+                        }
+
+                        foreach (var player in lobby.Players)
+                        {
+                            FillHand(lobby.DeckBox, player);
+                        }
+
+                        lobby.River.Attacker.Clear();
+                        lobby.River.Defender.Clear();
+                        lobby.River.Adder.Clear();
+
+                        _endAddingStep = 1;
+                    }
+                    break;
             }
 
-            lobby.River.Attacker.Clear();
-            lobby.River.Defender.Clear();
-            lobby.River.Adder.Clear();
-
             foreach (var player in lobby.Players)
             {
-                var enemyPlayer = lobby.Players.FirstOrDefault(x => !x.Username.Equals(player.Username));
-
-                Debug.Assert(enemyPlayer != null, nameof(enemyPlayer) + " != null");
-
                 var reply = new DurakReply
                 {
                     EndAddingReply = new EndAddingReply
                     {
                         IPlayer = new DurakNetPlayer
                         {
+                            Role = player.Role,
                             Username = player.Username,
-                            Role = player.Role
                         },
-                        EnemyPlayer = new DurakNetPlayer
-                        {
-                            Username = enemyPlayer.Username,
-                            Role = enemyPlayer.Role
-                        }
                     }
                 };
-
                 reply.EndAddingReply.IPlayer.Hand.AddRange(player.Hand);
-                reply.EndAddingReply.EnemyPlayer.Hand.AddRange(enemyPlayer.Hand);
+
+                foreach (var enemyPlayer in lobby.Players)
+                {
+                    if (enemyPlayer.Username != player.Username)
+                    {
+                        DurakNetPlayer EnemyPlayer = new DurakNetPlayer
+                        {
+                            Role = enemyPlayer.Role,
+                            Username = enemyPlayer.Username
+                        };
+                        EnemyPlayer.Hand.AddRange(enemyPlayer.Hand);
+                        reply.EndAddingReply.EnemyPlayers.Add(EnemyPlayer);
+                    }
+                }
 
                 await player.DurakStreamReply.WriteAsync(reply);
             }
