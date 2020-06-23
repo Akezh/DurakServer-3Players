@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using DurakServer.Models;
 using DurakServer.Providers;
 using Google.Protobuf.Collections;
+using Grpc.Core;
 using Microsoft.AspNetCore.Connections.Features;
 
 namespace DurakServer.Adapters
@@ -15,7 +16,7 @@ namespace DurakServer.Adapters
         Task CreateLobby(Player player);
         Lobby GetLobby(Player player);
         Task HandleTurn(Lobby lobby, Player player, Card card);
-        Task HandleEndAttack(Lobby lobby);
+        Task HandleEndAttack(Lobby lobby, Player originalPlayer);
         Task HandleEndDefence(Lobby lobby);
         Task HandleEndAdding(Lobby lobby);
     }
@@ -23,6 +24,8 @@ namespace DurakServer.Adapters
     public class DurakLobbyAdapter : IDurakLobbyAdapter
     {
         private readonly IDurakLobbyProvider durakLobbyProvider;
+        private static int _endAttackStep = 1;
+        private static int _prevRiverCount = 0;
         public DurakLobbyAdapter(IDurakLobbyProvider durakLobbyProvider)
         {
             this.durakLobbyProvider = durakLobbyProvider;
@@ -192,6 +195,11 @@ namespace DurakServer.Adapters
 
                 player.Hand.Remove(card);
 
+                if (_endAttackStep == 3)
+                {
+                    await HandleEndAttack(lobby, player);
+                }
+
                 foreach (var somePlayer in lobby.Players)
                 {
                     await somePlayer.DurakStreamReply.WriteAsync(reply);
@@ -244,28 +252,144 @@ namespace DurakServer.Adapters
                 //        }
                 //}
         }
-        public async Task HandleEndAttack(Lobby lobby)
+        public async Task HandleEndAttack(Lobby lobby, Player originalPlayer)
         {
-            foreach (var player in lobby.Players)
+            switch (_endAttackStep)
             {
-                //FillHand(lobby.DeckBox, player);
-                switch (player.Role)
-                {
-                    case Role.Attacker:
+                case 1:
                     {
-                        player.Role = Role.Waiter;
-                    }
-                        break;
-                    case Role.Waiter:
-                    {
-                        player.Role = Role.Attacker;
-                    }
-                        break;
-                }
-            }
+                        foreach (var player in lobby.Players)
+                        {
+                            switch (player.Role)
+                            {
+                                case Role.Attacker:
+                                    player.Role = Role.FormerAttacker;
+                                    break;
+                                case Role.Waiter:
+                                    player.Role = Role.Attacker;
+                                    break;
+                            }
+                        }
 
-            //lobby.River.Attacker.Clear();
-            //lobby.River.Defender.Clear();
+                        _prevRiverCount = lobby.River.Defender.Count + lobby.River.Attacker.Count;
+                        _endAttackStep = 2;
+                    }
+                    break;
+                case 2:
+                    {
+                        if (_prevRiverCount == lobby.River.Defender.Count + lobby.River.Attacker.Count)
+                        {
+                            foreach (var player in lobby.Players)
+                            {
+                                FillHand(lobby.DeckBox, player);
+                                switch (player.Role)
+                                {
+                                    case Role.FormerAttacker:
+                                        player.Role = Role.Waiter;
+                                        break;
+                                    case Role.Defender:
+                                        player.Role = Role.Attacker;
+                                        break;
+                                    case Role.Attacker:
+                                        player.Role = Role.Defender;
+                                        break;
+                                }
+                            }
+
+                            lobby.River.Attacker.Clear();
+                            lobby.River.Defender.Clear();
+                            _endAttackStep = 1;
+                        }
+                        else
+                        {
+                            foreach (var player in lobby.Players)
+                            {
+                                switch (player.Role)
+                                {
+                                    case Role.FormerAttacker:
+                                        player.Role = Role.Attacker;
+                                        break;
+                                    case Role.Attacker:
+                                        player.Role = Role.FormerAttacker;
+                                        break;
+                                }
+                            }
+
+                            _prevRiverCount = lobby.River.Defender.Count + lobby.River.Attacker.Count;
+                            _endAttackStep = 3;
+                        }
+                    }
+                    break;
+                // Case 3 is handled in HandleTurn method since we need to wait of throwing one card from new attacker
+                case 3:
+                    if (_prevRiverCount == lobby.River.Defender.Count + lobby.River.Attacker.Count)
+                    {
+                        foreach (var player in lobby.Players)
+                        {
+                            FillHand(lobby.DeckBox, player);
+                            switch (player.Role)
+                            {
+                                case Role.FormerAttacker:
+                                    player.Role = Role.Defender;
+                                    break;
+                                case Role.Defender:
+                                    player.Role = Role.Attacker;
+                                    break;
+                                case Role.Attacker:
+                                    player.Role = Role.Waiter;
+                                    break;
+                            }
+                        }
+
+                        lobby.River.Attacker.Clear();
+                        lobby.River.Defender.Clear();
+                        _endAttackStep = 1;
+                    }
+                    else
+                    {
+                        foreach (var player in lobby.Players)
+                        {
+                            switch (player.Role)
+                            {
+                                case Role.FormerAttacker:
+                                    player.Role = Role.Attacker;
+                                    break;
+                            }
+                        }
+                        _endAttackStep = 4;
+                    }
+                    break;
+                case 4:
+                {
+                    originalPlayer.Role = Role.FormerAttacker;
+                    _endAttackStep = 5;
+                }
+                    break;
+                case 5:
+                    {
+                        foreach (var player in lobby.Players)
+                        {
+                            FillHand(lobby.DeckBox, player);
+                            switch (player.Role)
+                            {
+                                case Role.Attacker:
+                                    player.Role = Role.Defender;
+                                    break;
+                                case Role.FormerAttacker:
+                                    player.Role = Role.Waiter;
+                                    break;
+                                case Role.Defender:
+                                    player.Role = Role.Attacker;
+                                    break;
+                            }
+                        }
+
+                        lobby.River.Attacker.Clear();
+                        lobby.River.Defender.Clear();
+                        _endAttackStep = 1;
+                    }
+                    break;
+            }
 
             foreach (var player in lobby.Players)
             {
@@ -281,7 +405,6 @@ namespace DurakServer.Adapters
                     }
                 };
                 reply.EndAttackReply.IPlayer.Hand.AddRange(player.Hand);
-
 
                 foreach (var enemyPlayer in lobby.Players)
                 {

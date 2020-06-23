@@ -59,7 +59,7 @@ namespace DurakServer.Services
                             new RpcException(new Grpc.Core.Status(new StatusCode(), "Лобби не найден"));
                         }
 
-                        await lobbyAdapter.HandleEndAttack(lobby);
+                        await lobbyAdapter.HandleEndAttack(lobby, player);
                     } break;
                     case DurakRequest.RequestOneofCase.EndDefenceRequest:
                     {
