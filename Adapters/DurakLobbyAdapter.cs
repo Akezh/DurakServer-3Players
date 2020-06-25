@@ -28,7 +28,7 @@ namespace DurakServer.Adapters
         private static int _endAttackStep = 1;
         private static int _endAddingStep = 1;
         private static int _prevRiverCount = 0;
-        private static Dictionary<string, Role> initialRoundRoles = new Dictionary<string, Role>(); // key - username, value - role
+        private static Dictionary<string, Role> initialRoundRoles = new Dictionary<string, Role>(); // key - username, value - role, Считываем начальные роли игроков, чтобы в конце раунда присвоить им правильные значения.
         //private static pair
         public DurakLobbyAdapter(IDurakLobbyProvider durakLobbyProvider)
         {
@@ -178,18 +178,25 @@ namespace DurakServer.Adapters
         }
         public async Task HandleTurn(Lobby lobby, Player player, Card card)
         {
-                var reply = new DurakReply
-                {
-                    TurnReply = new TurnReply { Card = card }
-                };
+            var reply = new DurakReply
+            {
+                TurnReply = new TurnReply { Card = card }
+            };
 
-                //if (lobby.River.Attacker.Count == 0 && lobby.River.Defender.Count == 0)
-                //{
-                //    initialRoundRoles.Add();
-                //}
-
+            // initialRoundRoles заполняется как только в ривере нету карт
+            if (lobby.River.Attacker.Count == 0 && lobby.River.Defender.Count == 0)
+            {
                 foreach (var somePlayer in lobby.Players)
                 {
+                    if (initialRoundRoles.ContainsKey(somePlayer.Username))
+                        initialRoundRoles[somePlayer.Username] = somePlayer.Role;
+                    else
+                        initialRoundRoles.Add(somePlayer.Username, somePlayer.Role);
+                }
+            }
+
+            foreach (var somePlayer in lobby.Players)
+            {
                     if (somePlayer.Hand.Contains(card) && somePlayer.Role == Role.Attacker)
                     {
                         lobby.River.Attacker.Add(card);
@@ -200,19 +207,19 @@ namespace DurakServer.Adapters
                     {
                         lobby.River.Adder.Add(card);
                     }
-                }
+            }
 
-                player.Hand.Remove(card);
+            player.Hand.Remove(card);
 
-                if (_endAttackStep == 3)
-                {
-                    await HandleEndAttack(lobby, player);
-                }
+            if (_endAttackStep == 3)
+            {
+                await HandleEndAttack(lobby, player);
+            }
 
-                foreach (var somePlayer in lobby.Players)
-                {
-                    await somePlayer.DurakStreamReply.WriteAsync(reply);
-                }
+            foreach (var somePlayer in lobby.Players)
+            {
+                await somePlayer.DurakStreamReply.WriteAsync(reply);
+            }
         }
         public async Task HandleEndAttack(Lobby lobby, Player originalPlayer)
         {
@@ -284,22 +291,33 @@ namespace DurakServer.Adapters
                     break;
                 // Case 3 is handled in HandleTurn method since we need to wait of throwing one card from new attacker
                 case 3:
+                    // Two players click "Done", so the defender successfully beats the card: attacker -> waiter, defender -> attacker, waiter -> defender
                     if (_prevRiverCount == lobby.River.Defender.Count + lobby.River.Attacker.Count)
                     {
                         foreach (var player in lobby.Players)
                         {
                             FillHand(lobby.DeckBox, player);
-                            switch (player.Role)
+                        }
+
+                        foreach (KeyValuePair<string, Role> initialPlayer in initialRoundRoles)
+                        {
+                            foreach (var player in lobby.Players)
                             {
-                                case Role.FormerAttacker:
-                                    player.Role = Role.Defender;
-                                    break;
-                                case Role.Defender:
-                                    player.Role = Role.Attacker;
-                                    break;
-                                case Role.Attacker:
-                                    player.Role = Role.Waiter;
-                                    break;
+                                if (player.Username.Equals(initialPlayer.Key))
+                                {
+                                    switch (initialPlayer.Value)
+                                    {
+                                        case Role.Attacker:
+                                            player.Role = Role.Waiter;
+                                            break;
+                                        case Role.Defender:
+                                            player.Role = Role.Attacker;
+                                            break;
+                                        case Role.Waiter:
+                                            player.Role = Role.Defender;
+                                            break;
+                                    }
+                                }
                             }
                         }
 
@@ -329,6 +347,7 @@ namespace DurakServer.Adapters
                     break;
                 case 5:
                     {
+                        // updateInitialRoles, Defender successfully beats all cards: attacker -> waiter, defender -> attacker, waiter -> defender
                         foreach (var player in lobby.Players)
                         {
                             FillHand(lobby.DeckBox, player);
@@ -343,6 +362,28 @@ namespace DurakServer.Adapters
                                 case Role.Defender:
                                     player.Role = Role.Attacker;
                                     break;
+                            }
+                        }
+
+                        foreach (KeyValuePair<string, Role> initialPlayer in initialRoundRoles)
+                        {
+                            foreach (var player in lobby.Players)
+                            {
+                                if (player.Username.Equals(initialPlayer.Key))
+                                {
+                                    switch (initialPlayer.Value)
+                                    {
+                                        case Role.Attacker:
+                                            player.Role = Role.Waiter;
+                                            break;
+                                        case Role.Defender:
+                                            player.Role = Role.Attacker;
+                                            break;
+                                        case Role.Waiter:
+                                            player.Role = Role.Defender;
+                                            break;
+                                    }
+                                }
                             }
                         }
 
@@ -450,22 +491,31 @@ namespace DurakServer.Adapters
                     break;
                 case 2:
                     {
-                        foreach (var player in lobby.Players)
+                        // We need to update according to initial Roles
+                        // Защитник берет карты и мы должны defender -> waiter, waiter -> attacker, attacker -> defender
+
+                        foreach (KeyValuePair<string, Role> initialPlayer in initialRoundRoles)
                         {
-                            switch (player.Role)
+                            foreach (var player in lobby.Players)
                             {
-                                case Role.Defender: 
+                                if (player.Username.Equals(initialPlayer.Key))
+                                {
+                                    switch (initialPlayer.Value)
                                     {
-                                        player.Hand.AddRange(lobby.River.Attacker);
-                                        player.Hand.AddRange(lobby.River.Defender);
-                                        player.Hand.AddRange(lobby.River.Adder);
+                                        case Role.Attacker:
+                                            player.Role = Role.Defender;
+                                            break;
+                                        case Role.Defender:
+                                            player.Role = Role.Waiter;
+                                            player.Hand.AddRange(lobby.River.Attacker);
+                                            player.Hand.AddRange(lobby.River.Defender);
+                                            player.Hand.AddRange(lobby.River.Adder);
+                                            break;
+                                        case Role.Waiter:
+                                            player.Role = Role.Attacker;
+                                            break;
                                     }
-                                    break;
-                                case Role.Adder:
-                                    {
-                                        player.Role = Role.Attacker;
-                                    }
-                                    break;
+                                }
                             }
                         }
 
@@ -520,21 +570,29 @@ namespace DurakServer.Adapters
             foreach (var player in lobby.Players)
             {
                 FillHand(lobby.DeckBox, player);
-                // switch the roles
-                switch (player.Role)
+            }
+
+            // The defence was successful since all 12 cards were in the river: attacker -> waiter, defender -> attacker, waiter -> defender
+            // Обновление ролей по начальномым данным
+            foreach (KeyValuePair<string, Role> initialPlayer in initialRoundRoles)
+            {
+                foreach (var player in lobby.Players)
                 {
-                    case Role.Defender:
-                        player.Role = Role.Attacker;
-                        break;
-                    case Role.Attacker:
-                        player.Role = Role.Waiter;
-                        break;
-                    case Role.Waiter:
-                        player.Role = Role.Defender;
-                        break;
-                    case Role.FormerAttacker:
-                        player.Role = Role.Defender;
-                        break;
+                    if (player.Username.Equals(initialPlayer.Key))
+                    {
+                        switch (initialPlayer.Value)
+                        {
+                            case Role.Attacker:
+                                player.Role = Role.Waiter;
+                                break;
+                            case Role.Defender:
+                                player.Role = Role.Attacker;
+                                break;
+                            case Role.Waiter:
+                                player.Role = Role.Defender;
+                                break;
+                        }
+                    }
                 }
             }
 
