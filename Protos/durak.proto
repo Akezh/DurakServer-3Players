@@ -15,6 +15,7 @@ message DurakRequest {
 		EndAttackRequest endAttackRequest = 3;
 		EndDefenceRequest endDefenceRequest = 4;
 		EndAddingRequest endAddingRequest = 5;
+		FinishGameRoundRequest finishGameRoundRequest = 6;
 	}
 }
 
@@ -25,6 +26,9 @@ message EndDefenceRequest {
 }
 
 message EndAddingRequest {
+}
+
+message FinishGameRoundRequest {
 }
 
 message PlayRequest {
@@ -41,6 +45,7 @@ message DurakReply {
 		EndAttackReply endAttackReply = 3;
 		EndDefenceReply endDefenceReply = 4;
 		EndAddingReply endAddingReply = 5;
+		FinishGameRoundReply finishGameRoundReply = 6;
 	}
 }
 
@@ -66,6 +71,11 @@ message EndDefenceReply {
 }
 
 message EndAddingReply {
+	DurakNetPlayer iPlayer = 1;
+	repeated DurakNetPlayer enemyPlayers = 2;
+}
+
+message FinishGameRoundReply {
 	DurakNetPlayer iPlayer = 1;
 	repeated DurakNetPlayer enemyPlayers = 2;
 }

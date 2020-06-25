@@ -84,6 +84,18 @@ namespace DurakServer.Services
                         await lobbyAdapter.HandleEndAdding(lobby);
                     }
                         break;
+                    case DurakRequest.RequestOneofCase.FinishGameRoundRequest:
+                    {
+                        var lobby = lobbyAdapter.GetLobby(player);
+
+                        if (lobby == null)
+                        {
+                            new RpcException(new Grpc.Core.Status(new StatusCode(), "Лобби не найден"));
+                        }
+
+                        await lobbyAdapter.HandleFinishGameRound(lobby);
+                    }
+                        break;
                 }
             }
         }
