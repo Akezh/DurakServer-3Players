@@ -19,6 +19,7 @@ namespace DurakServer.Adapters
         Task HandleEndAttack(Lobby lobby, Player originalPlayer);
         Task HandleEndDefence(Lobby lobby);
         Task HandleEndAdding(Lobby lobby);
+        Task HandleFinishGameRound(Lobby lobby);
     }
 
     public class DurakLobbyAdapter : IDurakLobbyAdapter
@@ -27,6 +28,8 @@ namespace DurakServer.Adapters
         private static int _endAttackStep = 1;
         private static int _endAddingStep = 1;
         private static int _prevRiverCount = 0;
+        private static Dictionary<string, Role> initialRoundRoles = new Dictionary<string, Role>(); // key - username, value - role
+        //private static pair
         public DurakLobbyAdapter(IDurakLobbyProvider durakLobbyProvider)
         {
             this.durakLobbyProvider = durakLobbyProvider;
@@ -179,6 +182,11 @@ namespace DurakServer.Adapters
                 {
                     TurnReply = new TurnReply { Card = card }
                 };
+
+                //if (lobby.River.Attacker.Count == 0 && lobby.River.Defender.Count == 0)
+                //{
+                //    initialRoundRoles.Add();
+                //}
 
                 foreach (var somePlayer in lobby.Players)
                 {
@@ -501,6 +509,67 @@ namespace DurakServer.Adapters
                         };
                         EnemyPlayer.Hand.AddRange(enemyPlayer.Hand);
                         reply.EndAddingReply.EnemyPlayers.Add(EnemyPlayer);
+                    }
+                }
+
+                await player.DurakStreamReply.WriteAsync(reply);
+            }
+        }
+        public async Task HandleFinishGameRound(Lobby lobby)
+        {
+            foreach (var player in lobby.Players)
+            {
+                FillHand(lobby.DeckBox, player);
+                // switch the roles
+                switch (player.Role)
+                {
+                    case Role.Defender:
+                        player.Role = Role.Attacker;
+                        break;
+                    case Role.Attacker:
+                        player.Role = Role.Waiter;
+                        break;
+                    case Role.Waiter:
+                        player.Role = Role.Defender;
+                        break;
+                    case Role.FormerAttacker:
+                        player.Role = Role.Defender;
+                        break;
+                }
+            }
+
+            lobby.River.Attacker.Clear();
+            lobby.River.Defender.Clear();
+
+            _endAddingStep = 1;
+            _endAttackStep = 1;
+
+            foreach (var player in lobby.Players)
+            {
+                var reply = new DurakReply
+                {
+                    FinishGameRoundReply = new FinishGameRoundReply
+                    {
+                        IPlayer = new DurakNetPlayer
+                        {
+                            Role = player.Role,
+                            Username = player.Username,
+                        },
+                    }
+                };
+                reply.FinishGameRoundReply.IPlayer.Hand.AddRange(player.Hand);
+
+                foreach (var enemyPlayer in lobby.Players)
+                {
+                    if (enemyPlayer.Username != player.Username)
+                    {
+                        DurakNetPlayer EnemyPlayer = new DurakNetPlayer
+                        {
+                            Role = enemyPlayer.Role,
+                            Username = enemyPlayer.Username
+                        };
+                        EnemyPlayer.Hand.AddRange(enemyPlayer.Hand);
+                        reply.FinishGameRoundReply.EnemyPlayers.Add(EnemyPlayer);
                     }
                 }
 
