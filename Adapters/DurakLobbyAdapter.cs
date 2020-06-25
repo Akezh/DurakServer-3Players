@@ -168,52 +168,27 @@ namespace DurakServer.Adapters
         }
         private void UpdateDurakRoles(Lobby lobby, bool areCardsBeatenSuccessfully)
         {
-            if (areCardsBeatenSuccessfully)
+            foreach (KeyValuePair<string, Role> initialPlayer in initialRoundRoles)
             {
-                // The defence was successful since all 12 cards were in the river: attacker -> waiter, defender -> attacker, waiter -> defender
-                foreach (KeyValuePair<string, Role> initialPlayer in initialRoundRoles)
+                foreach (var player in lobby.Players)
                 {
-                    foreach (var player in lobby.Players)
+                    if (player.Username.Equals(initialPlayer.Key))
                     {
-                        if (player.Username.Equals(initialPlayer.Key))
+                        // The defence was successful since all 12 cards were in the river: attacker -> waiter, defender -> attacker, waiter -> defender
+                        switch (initialPlayer.Value)
                         {
-                            switch (initialPlayer.Value)
-                            {
-                                case Role.Attacker:
-                                    player.Role = Role.Waiter;
-                                    break;
-                                case Role.Defender:
-                                    player.Role = Role.Attacker;
-                                    break;
-                                case Role.Waiter:
-                                    player.Role = Role.Defender;
-                                    break;
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // The defence failed and all defender becames a waiter
-                foreach (KeyValuePair<string, Role> initialPlayer in initialRoundRoles)
-                {
-                    foreach (var player in lobby.Players)
-                    {
-                        if (player.Username.Equals(initialPlayer.Key))
-                        {
-                            switch (initialPlayer.Value)
-                            {
-                                case Role.Attacker:
-                                    player.Role = Role.Defender;
-                                    break;
-                                case Role.Defender:
-                                    player.Role = Role.Waiter;
-                                    break;
-                                case Role.Waiter:
-                                    player.Role = Role.Attacker;
-                                    break;
-                            }
+                            case Role.Attacker:
+                                if (areCardsBeatenSuccessfully) player.Role = Role.Waiter;
+                                else player.Role = Role.Defender;
+                                break;
+                            case Role.Defender:
+                                if (areCardsBeatenSuccessfully) player.Role = Role.Attacker;
+                                else player.Role = Role.Waiter;
+                                break;
+                            case Role.Waiter:
+                                if (areCardsBeatenSuccessfully) player.Role = Role.Defender;
+                                else player.Role = Role.Attacker;
+                                break;
                         }
                     }
                 }
