@@ -16,6 +16,7 @@ message DurakRequest {
 		EndDefenceRequest endDefenceRequest = 4;
 		EndAddingRequest endAddingRequest = 5;
 		FinishGameRoundRequest finishGameRoundRequest = 6;
+		EnableTwoPlayersModeRequest enableTwoPlayersModeRequest = 7;
 	}
 }
 
@@ -29,6 +30,9 @@ message EndAddingRequest {
 }
 
 message FinishGameRoundRequest {
+}
+
+message EnableTwoPlayersModeRequest {
 }
 
 message PlayRequest {
@@ -46,6 +50,7 @@ message DurakReply {
 		EndDefenceReply endDefenceReply = 4;
 		EndAddingReply endAddingReply = 5;
 		FinishGameRoundReply finishGameRoundReply = 6;
+		EnableTwoPlayersModeReply enableTwoPlayersModeReply = 7;
 	}
 }
 
@@ -76,6 +81,11 @@ message EndAddingReply {
 }
 
 message FinishGameRoundReply {
+	DurakNetPlayer iPlayer = 1;
+	repeated DurakNetPlayer enemyPlayers = 2;
+}
+
+message EnableTwoPlayersModeReply {
 	DurakNetPlayer iPlayer = 1;
 	repeated DurakNetPlayer enemyPlayers = 2;
 }

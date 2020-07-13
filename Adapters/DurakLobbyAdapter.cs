@@ -20,6 +20,7 @@ namespace DurakServer.Adapters
         Task HandleEndDefence(Lobby lobby);
         Task HandleEndAdding(Lobby lobby, Player senderPlayer);
         Task HandleFinishGameRound(Lobby lobby);
+        Task EnableTwoPlayersMode(Lobby lobby, Player senderPlayer);
     }
 
     public class DurakLobbyAdapter : IDurakLobbyAdapter
@@ -31,7 +32,7 @@ namespace DurakServer.Adapters
         private static bool _twoPlayersLeft = false;
 
         private static Dictionary<string, Role> initialRoundRoles = new Dictionary<string, Role>(); // key - username, value - role, Считываем начальные роли игроков, чтобы в конце раунда присвоить им правильные значения.
-        //private static pair
+        //private static pair class or concurrent dictionary
         public DurakLobbyAdapter(IDurakLobbyProvider durakLobbyProvider)
         {
             this.durakLobbyProvider = durakLobbyProvider;
@@ -298,11 +299,6 @@ namespace DurakServer.Adapters
                 _twoPlayersLeft = true;
                DefenderBeatsCards(lobby);
             }
-            if (lobby.DeckBox.ShuffledDeckList.Count == 0 && senderPlayer.Hand.Count == 0 && senderPlayer.Role == Role.Attacker)
-            {
-                senderPlayer.Role = Role.Inactive;
-                _twoPlayersLeft = true;
-            }
 
             foreach (var player in lobby.Players) await player.DurakStreamReply.WriteAsync(reply);
         }
@@ -427,7 +423,7 @@ namespace DurakServer.Adapters
 
                 await player.DurakStreamReply.WriteAsync(reply);
             }
-        }
+        } 
         public async Task HandleEndDefence(Lobby lobby)
         {
             foreach (var player in lobby.Players)
@@ -559,6 +555,61 @@ namespace DurakServer.Adapters
                         };
                         EnemyPlayer.Hand.AddRange(enemyPlayer.Hand);
                         reply.FinishGameRoundReply.EnemyPlayers.Add(EnemyPlayer);
+                    }
+                }
+
+                await player.DurakStreamReply.WriteAsync(reply);
+            }
+        }
+        public async Task EnableTwoPlayersMode(Lobby lobby, Player senderPlayer)
+        {
+            if (_twoPlayersLeft == true)
+            {
+                // The game is finished
+            }
+
+            if (senderPlayer.Role == Role.Attacker)
+            {
+                foreach (var player in lobby.Players)
+                    if (!player.Username.Equals(senderPlayer.Username) && player.Role != Role.Defender && player.Role != Role.Inactive)
+                        player.Role = Role.Attacker;
+            } else if (senderPlayer.Role == Role.Adder)
+            {
+                foreach (var player in lobby.Players)
+                    if (!player.Username.Equals(senderPlayer.Username) && player.Role != Role.Defender && player.Role != Role.Inactive)
+                        player.Role = Role.Adder;
+            }
+
+            // Эту функцию вызывает attacker или adder который выбросил свою последнюю карту
+            senderPlayer.Role = Role.Inactive;
+            _twoPlayersLeft = true;
+
+            foreach (var player in lobby.Players)
+            {
+                var reply = new DurakReply
+                {
+                    EnableTwoPlayersModeReply = new EnableTwoPlayersModeReply
+                    {
+                        IPlayer = new DurakNetPlayer
+                        {
+                            Role = player.Role,
+                            Username = player.Username,
+                        },
+                    }
+                };
+                reply.EnableTwoPlayersModeReply.IPlayer.Hand.AddRange(player.Hand);
+
+                foreach (var enemyPlayer in lobby.Players)
+                {
+                    if (enemyPlayer.Username != player.Username)
+                    {
+                        DurakNetPlayer EnemyPlayer = new DurakNetPlayer
+                        {
+                            Role = enemyPlayer.Role,
+                            Username = enemyPlayer.Username
+                        };
+                        EnemyPlayer.Hand.AddRange(enemyPlayer.Hand);
+                        reply.EnableTwoPlayersModeReply.EnemyPlayers.Add(EnemyPlayer);
                     }
                 }
 

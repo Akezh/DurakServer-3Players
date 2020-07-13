@@ -96,6 +96,19 @@ namespace DurakServer.Services
                         await lobbyAdapter.HandleFinishGameRound(lobby);
                     }
                         break;
+                    case DurakRequest.RequestOneofCase.EnableTwoPlayersModeRequest:
+                        {
+                            var lobby = lobbyAdapter.GetLobby(player);
+
+                            if (lobby == null)
+                            {
+                                new RpcException(new Grpc.Core.Status(new StatusCode(), "Лобби не найден"));
+                            }
+
+                            await lobbyAdapter.EnableTwoPlayersMode(lobby, player);
+                        }
+                        break;
+
                 }
             }
         }
