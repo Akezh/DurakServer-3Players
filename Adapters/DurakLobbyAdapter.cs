@@ -28,6 +28,8 @@ namespace DurakServer.Adapters
         private static int _endAttackStep = 1;
         private static int _endAddingStep = 1;
         private static int _prevRiverCount = 0;
+        private static bool _twoPlayersLeft = false;
+
         private static Dictionary<string, Role> initialRoundRoles = new Dictionary<string, Role>(); // key - username, value - role, Считываем начальные роли игроков, чтобы в конце раунда присвоить им правильные значения.
         //private static pair
         public DurakLobbyAdapter(IDurakLobbyProvider durakLobbyProvider)
@@ -170,23 +172,48 @@ namespace DurakServer.Adapters
             {
                 foreach (var player in lobby.Players)
                 {
-                    if (player.Username.Equals(initialPlayer.Key))
+
+                    if (_twoPlayersLeft == false)
                     {
-                        // The defence was successful since all 12 cards were in the river: attacker -> waiter, defender -> attacker, waiter -> defender
-                        switch (initialPlayer.Value)
+                        if (player.Username.Equals(initialPlayer.Key))
                         {
-                            case Role.Attacker:
-                                if (areCardsBeatenSuccessfully) player.Role = Role.Waiter;
-                                else player.Role = Role.Defender;
-                                break;
-                            case Role.Defender:
-                                if (areCardsBeatenSuccessfully) player.Role = Role.Attacker;
-                                else player.Role = Role.Waiter;
-                                break;
-                            case Role.Waiter:
-                                if (areCardsBeatenSuccessfully) player.Role = Role.Defender;
-                                else player.Role = Role.Attacker;
-                                break;
+                            // The defence was successful since all 12 cards were in the river: attacker -> waiter, defender -> attacker, waiter -> defender
+                            switch (initialPlayer.Value)
+                            {
+                                case Role.Attacker:
+                                    if (areCardsBeatenSuccessfully) player.Role = Role.Waiter;
+                                    else player.Role = Role.Defender;
+                                    break;
+                                case Role.Defender:
+                                    if (areCardsBeatenSuccessfully) player.Role = Role.Attacker;
+                                    else player.Role = Role.Waiter;
+                                    break;
+                                case Role.Waiter:
+                                    if (areCardsBeatenSuccessfully) player.Role = Role.Defender;
+                                    else player.Role = Role.Attacker;
+                                    break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (player.Username.Equals(initialPlayer.Key))
+                        {
+                            if (player.Role == Role.Inactive) continue;
+                            switch (initialPlayer.Value)
+                            {
+                                case Role.Attacker:
+                                    if (areCardsBeatenSuccessfully) player.Role = Role.Defender;
+                                    else player.Role = Role.Attacker;
+                                    break;
+                                case Role.Defender:
+                                    if (areCardsBeatenSuccessfully) player.Role = Role.Attacker;
+                                    else player.Role = Role.Defender;
+                                    break;
+                                case Role.Waiter:
+                                    player.Role = Role.Attacker;
+                                    break;
+                            }
                         }
                     }
                 }
@@ -235,33 +262,78 @@ namespace DurakServer.Adapters
 
             if (_endAttackStep == 3) await HandleEndAttack(lobby, senderPlayer);
 
+            // If player has no more cards, set him as an inactive
+            if (lobby.DeckBox.ShuffledDeckList.Count == 0 && senderPlayer.Hand.Count == 0 && senderPlayer.Role == Role.Defender)
+            {
+                senderPlayer.Role = Role.Inactive;
+                _twoPlayersLeft = true;
+               DefenderBeatsCards(lobby);
+            }
+            if (lobby.DeckBox.ShuffledDeckList.Count == 0 && senderPlayer.Hand.Count == 0 && senderPlayer.Role == Role.Attacker)
+            {
+                senderPlayer.Role = Role.Inactive;
+                _twoPlayersLeft = true;
+            }
+
             foreach (var player in lobby.Players) await player.DurakStreamReply.WriteAsync(reply);
         }
         public async Task HandleEndAttack(Lobby lobby, Player senderPlayer)
         {
-            switch (_endAttackStep)
+            if (_twoPlayersLeft == true)
             {
-                case 1:
-                    {
-                        foreach (var player in lobby.Players)
+                DefenderBeatsCards(lobby);
+            }
+            else
+            {
+                switch (_endAttackStep)
+                {
+                    case 1:
                         {
-                            switch (player.Role)
+                            foreach (var player in lobby.Players)
                             {
-                                case Role.Attacker:
-                                    player.Role = Role.FormerAttacker;
-                                    break;
-                                case Role.Waiter:
-                                    player.Role = Role.Attacker;
-                                    break;
+                                switch (player.Role)
+                                {
+                                    case Role.Attacker:
+                                        player.Role = Role.FormerAttacker;
+                                        break;
+                                    case Role.Waiter:
+                                        player.Role = Role.Attacker;
+                                        break;
+                                }
+                            }
+
+                            _prevRiverCount = lobby.River.Defender.Count + lobby.River.Attacker.Count;
+                            _endAttackStep = 2;
+                        }
+                        break;
+                    case 2:
+                        {
+                            if (_prevRiverCount == lobby.River.Defender.Count + lobby.River.Attacker.Count)
+                            {
+                                DefenderBeatsCards(lobby);
+                            }
+                            else
+                            {
+                                foreach (var player in lobby.Players)
+                                {
+                                    switch (player.Role)
+                                    {
+                                        case Role.FormerAttacker:
+                                            player.Role = Role.Attacker;
+                                            break;
+                                        case Role.Attacker:
+                                            player.Role = Role.FormerAttacker;
+                                            break;
+                                    }
+                                }
+
+                                _prevRiverCount = lobby.River.Defender.Count + lobby.River.Attacker.Count;
+                                _endAttackStep = 3;
                             }
                         }
-
-                        _prevRiverCount = lobby.River.Defender.Count + lobby.River.Attacker.Count;
-                        _endAttackStep = 2;
-                    }
-                    break;
-                case 2:
-                    {
+                        break;
+                    // Case 3 is handled in HandleTurn method since we need to wait of throwing one card from new attacker
+                    case 3:
                         if (_prevRiverCount == lobby.River.Defender.Count + lobby.River.Attacker.Count)
                         {
                             DefenderBeatsCards(lobby);
@@ -275,50 +347,24 @@ namespace DurakServer.Adapters
                                     case Role.FormerAttacker:
                                         player.Role = Role.Attacker;
                                         break;
-                                    case Role.Attacker:
-                                        player.Role = Role.FormerAttacker;
-                                        break;
                                 }
                             }
-
-                            _prevRiverCount = lobby.River.Defender.Count + lobby.River.Attacker.Count;
-                            _endAttackStep = 3;
+                            _endAttackStep = 4;
                         }
-                    }
-                    break;
-                // Case 3 is handled in HandleTurn method since we need to wait of throwing one card from new attacker
-                case 3:
-                    // Two players click "Done", so the defender successfully beats the card: attacker -> waiter, defender -> attacker, waiter -> defender
-                    if (_prevRiverCount == lobby.River.Defender.Count + lobby.River.Attacker.Count)
-                    {
-                        DefenderBeatsCards(lobby);
-                    }
-                    else
-                    {
-                        foreach (var player in lobby.Players)
+                        break;
+                    case 4:
                         {
-                            switch (player.Role)
-                            {
-                                case Role.FormerAttacker:
-                                    player.Role = Role.Attacker;
-                                    break;
-                            }
+                            senderPlayer.Role = Role.FormerAttacker;
+                            _endAttackStep = 5;
                         }
-                        _endAttackStep = 4;
-                    }
-                    break;
-                case 4:
-                {
-                    senderPlayer.Role = Role.FormerAttacker;
-                    _endAttackStep = 5;
+                        break;
+                    case 5:
+                        {
+                            // updateInitialRoles, Defender successfully beats all cards: attacker -> waiter, defender -> attacker, waiter -> defender
+                            DefenderBeatsCards(lobby);
+                        }
+                        break;
                 }
-                    break;
-                case 5:
-                    {
-                        // updateInitialRoles, Defender successfully beats all cards: attacker -> waiter, defender -> attacker, waiter -> defender
-                        DefenderBeatsCards(lobby);
-                    }
-                    break;
             }
 
             foreach (var player in lobby.Players)
@@ -356,7 +402,7 @@ namespace DurakServer.Adapters
         public async Task HandleEndDefence(Lobby lobby)
         {
             foreach (var player in lobby.Players)
-                if (player.Role == Role.Attacker) 
+                if (player.Role == Role.Attacker)
                     player.Role = Role.Adder;
 
             if (lobby.River.Attacker.Count == 6) DefenderTakesCards(lobby);
@@ -395,25 +441,31 @@ namespace DurakServer.Adapters
         }
         public async Task HandleEndAdding(Lobby lobby, Player senderPlayer)
         {
-            switch (_endAddingStep)
+            if (_twoPlayersLeft == true)
             {
-                case 1:
-                    {
-                        foreach (var player in lobby.Players)
+                DefenderTakesCards(lobby);
+            } else
+            {
+                switch (_endAddingStep)
+                {
+                    case 1:
                         {
-                            if (player.Username.Equals(senderPlayer.Username))
-                                player.Role = Role.Waiter;
-                            else if (player.Role == Role.Waiter || player.Role == Role.FormerAttacker)
-                                player.Role = Role.Adder;
-                        }
+                            foreach (var player in lobby.Players)
+                            {
+                                if (player.Username.Equals(senderPlayer.Username))
+                                    player.Role = Role.Waiter;
+                                else if (player.Role == Role.Waiter || player.Role == Role.FormerAttacker)
+                                    player.Role = Role.Adder;
+                            }
 
-                        _endAddingStep = 2;
-                        if (lobby.River.Attacker.Count + lobby.River.Adder.Count == 6) DefenderTakesCards(lobby);
-                    }
-                    break;
-                case 2:
-                    DefenderTakesCards(lobby);
-                    break;
+                            _endAddingStep = 2;
+                            if (lobby.River.Attacker.Count + lobby.River.Adder.Count == 6) DefenderTakesCards(lobby);
+                        }
+                        break;
+                    case 2:
+                        DefenderTakesCards(lobby);
+                        break;
+                }
             }
 
             foreach (var player in lobby.Players)
