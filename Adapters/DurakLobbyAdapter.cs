@@ -229,6 +229,35 @@ namespace DurakServer.Adapters
                 player.Hand.Add(card);
             }
         }
+        private void FillHandInSequence(Lobby lobby)
+        {
+            foreach (KeyValuePair<string, Role> initialPlayer in initialRoundRoles)
+                if (initialPlayer.Value == Role.Attacker)
+                    foreach (var player in lobby.Players)
+                        if (player.Username.Equals(initialPlayer.Key))
+                        {
+                            FillHand(lobby.DeckBox, player);
+                            break;
+                        }
+
+            foreach (KeyValuePair<string, Role> initialPlayer in initialRoundRoles)
+                if (initialPlayer.Value == Role.Waiter)
+                    foreach (var player in lobby.Players)
+                        if (player.Username.Equals(initialPlayer.Key))
+                        {
+                            FillHand(lobby.DeckBox, player);
+                            break;
+                        }
+
+            foreach (KeyValuePair<string, Role> initialPlayer in initialRoundRoles)
+                if (initialPlayer.Value == Role.Defender)
+                    foreach (var player in lobby.Players)
+                        if (player.Username.Equals(initialPlayer.Key))
+                        {
+                            FillHand(lobby.DeckBox, player);
+                            break;
+                        }
+        }
         public async Task HandleTurn(Lobby lobby, Player senderPlayer, Card card)
         {
             var reply = new DurakReply
@@ -539,10 +568,10 @@ namespace DurakServer.Adapters
         public Lobby GetLobby(Player player) => durakLobbyProvider.Lobbies.FirstOrDefault(x => x.Players.Contains(player));
         public void DefenderTakesCards(Lobby lobby)
         {
+            FillHandInSequence(lobby);
             // We need to update according to initial Roles
             foreach (var player in lobby.Players)
             {
-                FillHand(lobby.DeckBox, player);
                 if (player.Role == Role.Defender)
                 {
                     player.Hand.AddRange(lobby.River.Attacker);
@@ -561,10 +590,7 @@ namespace DurakServer.Adapters
         }
         public void DefenderBeatsCards(Lobby lobby)
         {
-            foreach (var player in lobby.Players)
-            {
-                FillHand(lobby.DeckBox, player);
-            }
+            FillHandInSequence(lobby);
 
             UpdateDurakRoles(lobby, true);
             _endAttackStep = 1;
