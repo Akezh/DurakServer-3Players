@@ -32,7 +32,7 @@ namespace DurakServer.Adapters
         private static bool _twoPlayersLeft = false;
 
         private static Dictionary<string, Role> initialRoundRoles = new Dictionary<string, Role>(); // key - username, value - role, Считываем начальные роли игроков, чтобы в конце раунда присвоить им правильные значения.
-        //private static pair
+        //private static pair class or concurrent dictionary
         public DurakLobbyAdapter(IDurakLobbyProvider durakLobbyProvider)
         {
             this.durakLobbyProvider = durakLobbyProvider;
