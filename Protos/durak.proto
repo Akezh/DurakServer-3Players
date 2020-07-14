@@ -20,6 +20,13 @@ message DurakRequest {
 	}
 }
 
+message PlayRequest {
+}
+
+message TurnRequest {
+	Card card = 1;
+}
+
 message EndAttackRequest {
 }
 
@@ -33,13 +40,6 @@ message FinishGameRoundRequest {
 }
 
 message EnableTwoPlayersModeRequest {
-}
-
-message PlayRequest {
-}
-
-message TurnRequest {
-	Card card = 1;
 }
 
 message DurakReply {
