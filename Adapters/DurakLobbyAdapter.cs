@@ -211,9 +211,6 @@ namespace DurakServer.Adapters
                                     if (areCardsBeatenSuccessfully) player.Role = Role.Attacker;
                                     else player.Role = Role.Defender;
                                     break;
-                                case Role.Waiter:
-                                    player.Role = Role.Attacker;
-                                    break;
                             }
                         }
                     }
@@ -583,6 +580,15 @@ namespace DurakServer.Adapters
             // Эту функцию вызывает attacker или adder который выбросил свою последнюю карту
             senderPlayer.Role = Role.Inactive;
             _twoPlayersLeft = true;
+
+            // Update initial roles for 2 players
+            foreach (var player in lobby.Players)
+            {
+                if (initialRoundRoles.ContainsKey(player.Username))
+                    initialRoundRoles[player.Username] = player.Role;
+                else
+                    initialRoundRoles.Add(player.Username, player.Role);
+            }
 
             foreach (var player in lobby.Players)
             {
