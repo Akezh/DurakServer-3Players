@@ -211,6 +211,9 @@ namespace DurakServer.Adapters
                                     if (areCardsBeatenSuccessfully) player.Role = Role.Attacker;
                                     else player.Role = Role.Defender;
                                     break;
+                                case Role.Adder:
+                                    player.Role = Role.Attacker;
+                                    break;
                             }
                         }
                     }
@@ -574,12 +577,16 @@ namespace DurakServer.Adapters
             {
                 foreach (var player in lobby.Players)
                     if (!player.Username.Equals(senderPlayer.Username) && player.Role != Role.Defender && player.Role != Role.Inactive)
-                        player.Role = Role.Adder;
+                    {
+                        if (_endAddingStep == 1) player.Role = Role.Adder;
+                        else if (_endAddingStep == 2) player.Role = Role.Attacker;
+                    }
             }
 
             // Эту функцию вызывает attacker или adder который выбросил свою последнюю карту
             senderPlayer.Role = Role.Inactive;
             _twoPlayersLeft = true;
+            _endAddingStep = 1;
 
             // Update initial roles for 2 players
             foreach (var player in lobby.Players)
