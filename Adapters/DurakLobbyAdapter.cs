@@ -214,6 +214,9 @@ namespace DurakServer.Adapters
                                 case Role.Adder:
                                     player.Role = Role.Attacker;
                                     break;
+                                case Role.Waiter:
+                                    player.Role = Role.Attacker;
+                                    break;
                             }
                         }
                     }
