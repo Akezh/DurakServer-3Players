@@ -25,7 +25,6 @@ namespace DurakServer.Models
             {
                 ShuffledDeckList.Add(DrawCard(randomNumber.Next(0, _deckList.Count)));
             }
-
         }
 
         private void FillDeck()

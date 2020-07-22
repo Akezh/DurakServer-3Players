@@ -36,7 +36,6 @@ namespace DurakServer.Adapters
             if (durakLobbyProvider.WaitList.Count > 1)
             {
                 var enemyPlayers = durakLobbyProvider.WaitList;
-                //var enemy = durakLobbyProvider.WaitList.First();
 
                 var players = new List<Player>
                 {
@@ -66,7 +65,6 @@ namespace DurakServer.Adapters
             }
 
             durakLobbyProvider.Lobbies.Add(lobby);
-
             SetDurakRoles(players, lobby);
 
             return lobby;
@@ -294,7 +292,7 @@ namespace DurakServer.Adapters
             {
                 senderPlayer.Role = Role.Inactive;
                 lobby.TwoPlayersLeft = true;
-               DefenderBeatsCards(lobby);
+                DefenderBeatsCards(lobby);
             }
 
             foreach (var player in lobby.Players) await player.DurakStreamReply.WriteAsync(reply);
@@ -630,7 +628,6 @@ namespace DurakServer.Adapters
         public void DefenderTakesCards(Lobby lobby)
         {
             FillHandInSequence(lobby);
-            // We need to update according to initial Roles
             foreach (var player in lobby.Players)
             {
                 if (player.Role == Role.Defender)

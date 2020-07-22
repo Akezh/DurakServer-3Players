@@ -20,7 +20,6 @@ namespace DurakServer.Models
                 yield return player;
             }
         }
-
         public void Add(string username, Role role)
         {
             RolesCollections.Add(new PlayerRoleTracker(username, role));

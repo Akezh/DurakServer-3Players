@@ -9,11 +9,9 @@ namespace DurakServer.Models
     {
         public string Username;
         public Role role;
-
         public PlayerRoleTracker()
         {
         }
-
         public PlayerRoleTracker(string username, Role role)
         {
             Username = username;
