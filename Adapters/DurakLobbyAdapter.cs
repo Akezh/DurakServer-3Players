@@ -573,8 +573,16 @@ namespace DurakServer.Adapters
                 foreach (var player in lobby.Players)
                     if (!player.Username.Equals(senderPlayer.Username) && player.Role != Role.Defender && player.Role != Role.Inactive)
                     {
-                        if (lobby.EndAddingStep == 1) player.Role = Role.Adder;
-                        else if (lobby.EndAddingStep == 2) player.Role = Role.Attacker;
+                        if (lobby.EndAddingStep == 1)
+                        {
+                            player.Role = Role.Adder;
+                        }
+                        else if (lobby.EndAddingStep == 2)
+                        {
+                            senderPlayer.Role = Role.Inactive;
+                            lobby.TwoPlayersLeft = true;
+                            await HandleEndAdding(lobby, senderPlayer);
+                        }
                     }
             }
 
