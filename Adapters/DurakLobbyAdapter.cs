@@ -165,7 +165,6 @@ namespace DurakServer.Adapters
             {
                 foreach (var player in lobby.Players)
                 {
-
                     if (lobby.TwoPlayersLeft == false)
                     {
                         if (player.Username.Equals(initialPlayer.Username))
