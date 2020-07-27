@@ -159,7 +159,7 @@ namespace DurakServer.Adapters
                 }
             }
         }
-        private void UpdateDurakRoles(Lobby lobby, bool areCardsBeatenSuccessfully)
+        private void UpdateDurakRoles(Lobby lobby, bool areCardsBeatenSuccessfully) 
         {
             foreach (PlayerRoleTracker initialPlayer in lobby.initialRoundRoles)
             {
@@ -657,6 +657,15 @@ namespace DurakServer.Adapters
         public void DefenderBeatsCards(Lobby lobby)
         {
             FillHandInSequence(lobby);
+            
+            foreach (var player in lobby.Players)
+            {
+                if (player.Role == Role.Defender && player.Hand.Count == 0)
+                {
+                    player.Role = Role.Inactive;
+                    lobby.TwoPlayersLeft = true;
+                }
+            }
 
             UpdateDurakRoles(lobby, true);
             lobby.EndAttackStep = 1;
