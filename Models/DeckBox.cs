@@ -59,6 +59,9 @@ namespace DurakServer.Models
         {
             Card returnCard = ShuffledDeckList[position];
 
+            if (returnCard == null)
+                return null;
+
             ShuffledDeckList.Remove(returnCard);
 
             return returnCard;
