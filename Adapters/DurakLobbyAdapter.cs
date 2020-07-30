@@ -219,7 +219,7 @@ namespace DurakServer.Adapters
             // Заполнение руки
             for (int cards = player.Hand.Count; cards < 6; cards++)
             {
-                if (deckBox.ShuffledDeckList.Count == 0) break;
+                if (deckBox.ShuffledDeckList.Count <= 0) return;
                 var card = deckBox.DrawCardFromShuf();
                 player.Hand.Add(card);
             }
