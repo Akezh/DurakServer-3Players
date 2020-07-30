@@ -221,7 +221,10 @@ namespace DurakServer.Adapters
             {
                 if (deckBox.ShuffledDeckList.Count <= 0) return;
                 var card = deckBox.DrawCardFromShuf();
-                player.Hand.Add(card);
+
+                // Правильно проверить на null
+                if (card != null)
+                    player.Hand.Add(card);
             }
         }
         private void FillHandInSequence(Lobby lobby)
