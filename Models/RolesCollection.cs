@@ -7,7 +7,7 @@ namespace DurakServer.Models
 {
     public class RolesCollection
     {
-        List<PlayerRoleTracker> RolesCollections;
+        public List<PlayerRoleTracker> RolesCollections;
 
         public RolesCollection()
         {
@@ -50,6 +50,11 @@ namespace DurakServer.Models
                     return true;
 
             return false;
+        }
+
+        public int Count()
+        {
+            return RolesCollections.Count();
         }
     }
 }
