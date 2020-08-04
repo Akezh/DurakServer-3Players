@@ -51,6 +51,7 @@ message DurakReply {
 		EndAddingReply endAddingReply = 5;
 		FinishGameRoundReply finishGameRoundReply = 6;
 		EnableTwoPlayersModeReply enableTwoPlayersModeReply = 7;
+		GameEndReply gameEndReply = 8;
 	}
 }
 
@@ -86,6 +87,11 @@ message FinishGameRoundReply {
 }
 
 message EnableTwoPlayersModeReply {
+	DurakNetPlayer iPlayer = 1;
+	repeated DurakNetPlayer enemyPlayers = 2;
+}
+
+message GameEndReply {
 	DurakNetPlayer iPlayer = 1;
 	repeated DurakNetPlayer enemyPlayers = 2;
 }
@@ -128,6 +134,9 @@ enum Role {
 	Waiter = 3;
 	FormerAttacker = 4;
 	Inactive = 5;
+	FirstWinner = 6;
+	SecondWinner = 7;
+	ThirdWinner = 8;
 }
 
 enum Status {

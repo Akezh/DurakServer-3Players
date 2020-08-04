@@ -11,6 +11,7 @@ namespace DurakServer.Models
         public DeckBox DeckBox { get; }
         public River River { get; set; }
         public RolesCollection initialRoundRoles { get; set; }
+        public RolesCollection winners { get; set; }
         public int EndAttackStep;
         public int EndAddingStep;
         public int PrevRiverCount;
@@ -20,6 +21,7 @@ namespace DurakServer.Models
             DeckBox = new DeckBox();
             River = new River();
             initialRoundRoles = new RolesCollection();
+            winners = new RolesCollection();
             EndAttackStep = 1;
             EndAddingStep = 1;
             PrevRiverCount = 0;

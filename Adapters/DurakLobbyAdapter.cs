@@ -21,6 +21,7 @@ namespace DurakServer.Adapters
         Task HandleEndAdding(Lobby lobby, Player senderPlayer);
         Task HandleFinishGameRound(Lobby lobby);
         Task EnableTwoPlayersMode(Lobby lobby, Player senderPlayer);
+        Task HandleGameEnd(Lobby lobby);
     }
 
     public class DurakLobbyAdapter : IDurakLobbyAdapter
@@ -191,7 +192,13 @@ namespace DurakServer.Adapters
                     {
                         if (player.Username.Equals(initialPlayer.Username))
                         {
-                            if (player.Role == Role.Inactive) continue;
+                            if (player.Role == Role.Inactive)
+                            {
+                                if (!lobby.winners.ContainsKey(player.Username))
+                                    lobby.winners.Add(player.Username, Role.FirstWinner);
+                                continue;
+                            }
+
                             switch (initialPlayer.role)
                             {
                                 case Role.Attacker:
@@ -289,10 +296,20 @@ namespace DurakServer.Adapters
 
             if (lobby.EndAttackStep == 3) await HandleEndAttack(lobby, senderPlayer);
 
-            // If player has no more cards, set him as an inactive
-            if (lobby.DeckBox.ShuffledDeckList.Count == 0 && senderPlayer.Hand.Count == 0 && senderPlayer.Role == Role.Defender)
+
+            if (lobby.DeckBox.ShuffledDeckList.Count == 0 && senderPlayer.Hand.Count == 0 && lobby.winners.Count() > 0 && lobby.TwoPlayersLeft == true)
             {
                 senderPlayer.Role = Role.Inactive;
+                await HandleGameEnd(lobby);
+            }
+
+            // If player has no more cards, set him as an inactive
+            if (lobby.DeckBox.ShuffledDeckList.Count == 0 && senderPlayer.Hand.Count == 0 && senderPlayer.Role == Role.Defender && lobby.TwoPlayersLeft == false)
+            {
+                senderPlayer.Role = Role.Inactive;
+                if (!lobby.winners.ContainsKey(senderPlayer.Username))
+                    lobby.winners.Add(senderPlayer.Username, Role.FirstWinner);
+
                 lobby.TwoPlayersLeft = true;
                 DefenderBeatsCards(lobby);
             }
@@ -560,11 +577,6 @@ namespace DurakServer.Adapters
         }
         public async Task EnableTwoPlayersMode(Lobby lobby, Player senderPlayer)
         {
-            if (lobby.TwoPlayersLeft == true)
-            {
-                // The game is finished
-            }
-
             if (senderPlayer.Role == Role.Attacker)
             {
                 foreach (var player in lobby.Players)
@@ -590,6 +602,9 @@ namespace DurakServer.Adapters
 
             // Эту функцию вызывает attacker или adder который выбросил свою последнюю карту
             senderPlayer.Role = Role.Inactive;
+            if (!lobby.winners.ContainsKey(senderPlayer.Username))
+                lobby.winners.Add(senderPlayer.Username, Role.FirstWinner);
+
             lobby.TwoPlayersLeft = true;
             lobby.EndAddingStep = 1;
 
@@ -628,6 +643,53 @@ namespace DurakServer.Adapters
                         };
                         EnemyPlayer.Hand.AddRange(enemyPlayer.Hand);
                         reply.EnableTwoPlayersModeReply.EnemyPlayers.Add(EnemyPlayer);
+                    }
+                }
+
+                await player.DurakStreamReply.WriteAsync(reply);
+            }
+        }
+        public async Task HandleGameEnd(Lobby lobby)
+        {
+            foreach (var player in lobby.Players)
+            {
+                if (!lobby.winners.ContainsKey(player.Username) && player.Role == Role.Inactive)
+                    lobby.winners.Add(player.Username, Role.SecondWinner);
+                else if (!lobby.winners.ContainsKey(player.Username) && player.Role != Role.Inactive)
+                    lobby.winners.Add(player.Username, Role.ThirdWinner);
+            }
+
+            foreach (PlayerRoleTracker winnerPlayer in lobby.winners)
+                foreach (var lobbyPlayer in lobby.Players)
+                    if (winnerPlayer.Username.Equals(lobbyPlayer.Username))
+                        lobbyPlayer.Role = winnerPlayer.role;
+
+            foreach (var player in lobby.Players)
+            {
+                var reply = new DurakReply
+                {
+                    GameEndReply = new GameEndReply
+                    {
+                        IPlayer = new DurakNetPlayer
+                        {
+                            Role = player.Role,
+                            Username = player.Username,
+                        },
+                    }
+                };
+                reply.GameEndReply.IPlayer.Hand.AddRange(player.Hand);
+
+                foreach (var enemyPlayer in lobby.Players)
+                {
+                    if (enemyPlayer.Username != player.Username)
+                    {
+                        DurakNetPlayer EnemyPlayer = new DurakNetPlayer
+                        {
+                            Role = enemyPlayer.Role,
+                            Username = enemyPlayer.Username
+                        };
+                        EnemyPlayer.Hand.AddRange(enemyPlayer.Hand);
+                        reply.GameEndReply.EnemyPlayers.Add(EnemyPlayer);
                     }
                 }
 
