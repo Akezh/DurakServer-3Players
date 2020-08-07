@@ -732,6 +732,8 @@ namespace DurakServer.Adapters
             lobby.River.Attacker.Clear();
             lobby.River.Defender.Clear();
             lobby.River.Adder.Clear();
+
+            SetActiveTimerPlayer(lobby);
         }
         public void DefenderBeatsCards(Lobby lobby)
         {
@@ -752,6 +754,8 @@ namespace DurakServer.Adapters
 
             lobby.River.Attacker.Clear();
             lobby.River.Defender.Clear();
+
+            SetActiveTimerPlayer(lobby);
         }
         public void SetActiveTimerPlayer(Lobby lobby)
         {
@@ -761,12 +765,12 @@ namespace DurakServer.Adapters
             {
                 if (player.Role == Role.Adder)
                 {
-                    lobby.activeTimerPlayerUsername = player.Username;
-
                     if (!player.Username.Equals(formerActiveTimerPlayer))
                         lobby.reactivateTimer = false;
                     else
                         lobby.reactivateTimer = true;
+
+                    lobby.activeTimerPlayerUsername = player.Username;
 
                     return;
                 }
@@ -778,13 +782,12 @@ namespace DurakServer.Adapters
                 {
                     if (player.Role == Role.Attacker)
                     {
-                        lobby.activeTimerPlayerUsername = player.Username;
-
                         if (!player.Username.Equals(formerActiveTimerPlayer))
                             lobby.reactivateTimer = false;
                         else
                             lobby.reactivateTimer = true;
 
+                        lobby.activeTimerPlayerUsername = player.Username;
                         return;
                     }
                 }
@@ -795,13 +798,12 @@ namespace DurakServer.Adapters
                 {
                     if (player.Role == Role.Defender)
                     {
-                        lobby.activeTimerPlayerUsername = player.Username;
-
                         if (!player.Username.Equals(formerActiveTimerPlayer))
                             lobby.reactivateTimer = false;
                         else
                             lobby.reactivateTimer = true;
 
+                        lobby.activeTimerPlayerUsername = player.Username;
                         return;
                     }
                 }
