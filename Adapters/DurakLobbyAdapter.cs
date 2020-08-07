@@ -274,7 +274,6 @@ namespace DurakServer.Adapters
                 TurnReply = new TurnReply { Card = card }
             };
 
-            // initialRoundRoles заполняется как только в ривере нету карт
             if (lobby.River.Attacker.Count == 0 && lobby.River.Defender.Count == 0)
             {
                 foreach (var player in lobby.Players)

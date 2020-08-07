@@ -120,6 +120,7 @@ namespace DurakServer.Services
             {
                 while (!context.CancellationToken.IsCancellationRequested)
                 {
+
                     for (int i = 40; i > -2; i--)
                     {
                         await Task.Delay(1000);
@@ -135,8 +136,8 @@ namespace DurakServer.Services
                             await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.activeTimerPlayerUsername });
                             activeUsername = lobby.activeTimerPlayerUsername;
                         }
-
                     }
+
                 }
             }
             catch
