@@ -7,6 +7,7 @@ namespace DurakServer.Models
 {
     public class Lobby
     {
+        public int Id { get; set; }
         public List<Player> Players { get; set; } = new List<Player>();
         public DeckBox DeckBox { get; }
         public River River { get; set; }
@@ -16,8 +17,11 @@ namespace DurakServer.Models
         public int EndAddingStep;
         public int PrevRiverCount;
         public bool TwoPlayersLeft;
+        public string activeTimerPlayerUsername;
+        public bool reactivateTimer;
         public Lobby()
         {
+            Id = 0;
             DeckBox = new DeckBox();
             River = new River();
             initialRoundRoles = new RolesCollection();
@@ -26,6 +30,8 @@ namespace DurakServer.Models
             EndAddingStep = 1;
             PrevRiverCount = 0;
             TwoPlayersLeft = false;
+            activeTimerPlayerUsername = "";
+            reactivateTimer = false;
         }
     }
 }

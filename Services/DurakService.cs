@@ -11,11 +11,11 @@ namespace DurakServer.Services
 {
     public class DurakService : DurakGame.DurakGameBase
     {
-        private readonly IDurakLobbyAdapter lobbyAdapter;
+        private readonly IDurakLobbyAdapter durakLobbyAdapter;
 
         public DurakService(IDurakLobbyAdapter lobbyAdapter)
         {
-            this.lobbyAdapter = lobbyAdapter;
+            this.durakLobbyAdapter = lobbyAdapter;
         }
 
         public override async Task DurakStreaming(IAsyncStreamReader<DurakRequest> requestStream, IServerStreamWriter<DurakReply> responseStream, ServerCallContext context)
@@ -36,76 +36,76 @@ namespace DurakServer.Services
                 {
                     case DurakRequest.RequestOneofCase.PlayRequest:
                     {
-                        await lobbyAdapter.CreateLobby(player);
+                        await durakLobbyAdapter.CreateLobby(player);
 
                     } break;
                     case DurakRequest.RequestOneofCase.TurnRequest:
                     {
-                        var lobby = lobbyAdapter.GetLobby(player);
+                        var lobby = durakLobbyAdapter.GetLobby(player);
 
                         if (lobby == null)
                         {
                             new RpcException(new Grpc.Core.Status(new StatusCode(), "Лобби не найден"));
                         }
 
-                        await lobbyAdapter.HandleTurn(lobby, player, currentMessage.TurnRequest.Card);
+                        await durakLobbyAdapter.HandleTurn(lobby, player, currentMessage.TurnRequest.Card);
                     } break;
                     case DurakRequest.RequestOneofCase.EndAttackRequest:
                     {
-                        var lobby = lobbyAdapter.GetLobby(player);
+                        var lobby = durakLobbyAdapter.GetLobby(player);
 
                         if (lobby == null)
                         {
                             new RpcException(new Grpc.Core.Status(new StatusCode(), "Лобби не найден"));
                         }
 
-                        await lobbyAdapter.HandleEndAttack(lobby, player);
+                        await durakLobbyAdapter.HandleEndAttack(lobby, player);
                     } break;
                     case DurakRequest.RequestOneofCase.EndDefenceRequest:
                     {
-                        var lobby = lobbyAdapter.GetLobby(player);
+                        var lobby = durakLobbyAdapter.GetLobby(player);
 
                         if (lobby == null)
                         {
                             new RpcException(new Grpc.Core.Status(new StatusCode(), "Лобби не найден"));
                         }
 
-                        await lobbyAdapter.HandleEndDefence(lobby);
+                        await durakLobbyAdapter.HandleEndDefence(lobby);
                     } break;
                     case DurakRequest.RequestOneofCase.EndAddingRequest:
                     {
-                        var lobby = lobbyAdapter.GetLobby(player);
+                        var lobby = durakLobbyAdapter.GetLobby(player);
 
                         if (lobby == null)
                         {
                             new RpcException(new Grpc.Core.Status(new StatusCode(), "Лобби не найден"));
                         }
 
-                        await lobbyAdapter.HandleEndAdding(lobby, player);
+                        await durakLobbyAdapter.HandleEndAdding(lobby, player);
                     }
                         break;
                     case DurakRequest.RequestOneofCase.FinishGameRoundRequest:
                     {
-                        var lobby = lobbyAdapter.GetLobby(player);
+                        var lobby = durakLobbyAdapter.GetLobby(player);
 
                         if (lobby == null)
                         {
                             new RpcException(new Grpc.Core.Status(new StatusCode(), "Лобби не найден"));
                         }
 
-                        await lobbyAdapter.HandleFinishGameRound(lobby);
+                        await durakLobbyAdapter.HandleFinishGameRound(lobby);
                     }
                         break;
                     case DurakRequest.RequestOneofCase.EnableTwoPlayersModeRequest:
                         {
-                            var lobby = lobbyAdapter.GetLobby(player);
+                            var lobby = durakLobbyAdapter.GetLobby(player);
 
                             if (lobby == null)
                             {
                                 new RpcException(new Grpc.Core.Status(new StatusCode(), "Лобби не найден"));
                             }
 
-                            await lobbyAdapter.EnableTwoPlayersMode(lobby, player);
+                            await durakLobbyAdapter.EnableTwoPlayersMode(lobby, player);
                         }
                         break;
 
@@ -113,7 +113,40 @@ namespace DurakServer.Services
             }
         }
 
+        public override async Task StartTimerStreaming(TimerRequest request, IServerStreamWriter<TimerReply> responseStream, ServerCallContext context)
+        {
+            var lobby = durakLobbyAdapter.GetLobby(request.LobbyId);
 
+            string activeUsername = lobby.activeTimerPlayerUsername;
+
+            try
+            {
+                while (!context.CancellationToken.IsCancellationRequested)
+                {
+                    for (int i = 40; i > -2; i--)
+                    {
+                        await Task.Delay(1000);
+                        
+                        if (activeUsername.Equals(lobby.activeTimerPlayerUsername) && lobby.reactivateTimer == false)
+                        {
+                            await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.activeTimerPlayerUsername });
+                        } else
+                        {
+                            i = 40;
+                            lobby.reactivateTimer = false;
+
+                            await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.activeTimerPlayerUsername });
+                            activeUsername = lobby.activeTimerPlayerUsername;
+                        }
+
+                    }
+                }
+            }
+            catch
+            {
+                //await EndLobbyWhenTimerProblem(lobby, client, mirrorClient);
+            }
+        }
 
     }
 }

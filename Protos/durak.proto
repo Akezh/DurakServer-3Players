@@ -6,6 +6,7 @@ package durak;
 
 service DurakGame {
   rpc DurakStreaming (stream DurakRequest) returns (stream DurakReply);
+  rpc StartTimerStreaming (TimerRequest) returns (stream TimerReply);
 }
 
 message DurakRequest {
@@ -42,6 +43,10 @@ message FinishGameRoundRequest {
 message EnableTwoPlayersModeRequest {
 }
 
+message TimerRequest {
+    int32 lobbyId = 1;
+}
+
 message DurakReply {
 	oneof Reply {
 		LobbyReply lobbyReply = 1;
@@ -56,10 +61,11 @@ message DurakReply {
 }
 
 message LobbyReply {
-	DurakNetPlayer iPlayer = 1;
-	repeated DurakNetPlayer enemyPlayers = 2;
-	repeated Card deckBox = 3;
-	Card trump = 4;
+	int32 id = 1;
+	DurakNetPlayer iPlayer = 2;
+	repeated DurakNetPlayer enemyPlayers = 3;
+	repeated Card deckBox = 4;
+	Card trump = 5;
 }
 
 message TurnReply {
@@ -95,7 +101,13 @@ message GameEndReply {
 	DurakNetPlayer iPlayer = 1;
 	repeated DurakNetPlayer enemyPlayers = 2;
 }
- 
+
+message TimerReply {
+    int32 time = 1;
+	string username = 2;
+    // CheckerColor currentMoveColor = 2;
+}
+
 message DurakNetPlayer {
 	string username = 1;
 	repeated Card hand = 2;
