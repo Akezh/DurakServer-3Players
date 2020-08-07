@@ -756,14 +756,6 @@ namespace DurakServer.Adapters
         }
         public void SetActiveTimerPlayer(Lobby lobby)
         {
-            //if (lobby.River.Attacker.Count == 0)
-            //    foreach (var player in lobby.Players)
-            //        if (player.Role == Role.Attacker)
-            //        {
-            //            lobby.activeTimerPlayerUsername = player.Username;
-            //            return;
-            //        }
-
             string formerActiveTimerPlayer = lobby.activeTimerPlayerUsername;
 
             foreach (var player in lobby.Players)
