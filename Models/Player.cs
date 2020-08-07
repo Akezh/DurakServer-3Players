@@ -11,6 +11,7 @@ namespace DurakServer.Models
         public string Username { get; set; }
         public List<Card> Hand { get; set; } = new List<Card>();
         public IServerStreamWriter<DurakReply> DurakStreamReply { get; set; }
+        public IServerStreamWriter<TimerReply> TimerStreamReply { get; set; }
         public Role Role { get; set; }
     }
 }
