@@ -105,7 +105,6 @@ message GameEndReply {
 message TimerReply {
     int32 time = 1;
 	string username = 2;
-    // CheckerColor currentMoveColor = 2;
 }
 
 message DurakNetPlayer {

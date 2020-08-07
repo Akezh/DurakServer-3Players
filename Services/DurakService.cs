@@ -26,8 +26,6 @@ namespace DurakServer.Services
                 DurakStreamReply = responseStream
             };
 
-            // DECKBOX
-
             while (await requestStream.MoveNext(context.CancellationToken))
             {
                 var currentMessage = requestStream.Current;
@@ -116,13 +114,13 @@ namespace DurakServer.Services
         public override async Task StartTimerStreaming(TimerRequest request, IServerStreamWriter<TimerReply> responseStream, ServerCallContext context)
         {
             var lobby = durakLobbyAdapter.GetLobby(request.LobbyId);
-
             string activeUsername = lobby.activeTimerPlayerUsername;
 
             try
             {
                 while (!context.CancellationToken.IsCancellationRequested)
                 {
+
                     for (int i = 40; i > -2; i--)
                     {
                         await Task.Delay(1000);
@@ -138,8 +136,8 @@ namespace DurakServer.Services
                             await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.activeTimerPlayerUsername });
                             activeUsername = lobby.activeTimerPlayerUsername;
                         }
-
                     }
+
                 }
             }
             catch
