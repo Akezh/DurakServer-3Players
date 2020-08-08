@@ -12,16 +12,21 @@ service DurakGame {
 message DurakRequest {
 	oneof Request {
 		PlayRequest playRequest = 1;
-		TurnRequest turnRequest = 2;
-		EndAttackRequest endAttackRequest = 3;
-		EndDefenceRequest endDefenceRequest = 4;
-		EndAddingRequest endAddingRequest = 5;
-		FinishGameRoundRequest finishGameRoundRequest = 6;
-		EnableTwoPlayersModeRequest enableTwoPlayersModeRequest = 7;
+		DialogRequest dialogRequest = 2;
+		TurnRequest turnRequest = 3;
+		EndAttackRequest endAttackRequest = 4;
+		EndDefenceRequest endDefenceRequest = 5;
+		EndAddingRequest endAddingRequest = 6;
+		FinishGameRoundRequest finishGameRoundRequest = 7;
+		EnableTwoPlayersModeRequest enableTwoPlayersModeRequest = 8;
 	}
 }
 
 message PlayRequest {
+}
+
+message DialogRequest {
+	Dialog dialog = 1;
 }
 
 message TurnRequest {
@@ -50,13 +55,14 @@ message TimerRequest {
 message DurakReply {
 	oneof Reply {
 		LobbyReply lobbyReply = 1;
-		TurnReply turnReply = 2;
-		EndAttackReply endAttackReply = 3;
-		EndDefenceReply endDefenceReply = 4;
-		EndAddingReply endAddingReply = 5;
-		FinishGameRoundReply finishGameRoundReply = 6;
-		EnableTwoPlayersModeReply enableTwoPlayersModeReply = 7;
-		GameEndReply gameEndReply = 8;
+		DialogReply dialogReply = 2;
+		TurnReply turnReply = 3;
+		EndAttackReply endAttackReply = 4;
+		EndDefenceReply endDefenceReply = 5;
+		EndAddingReply endAddingReply = 6;
+		FinishGameRoundReply finishGameRoundReply = 7;
+		EnableTwoPlayersModeReply enableTwoPlayersModeReply = 8;
+		GameEndReply gameEndReply = 9;
 	}
 }
 
@@ -66,6 +72,11 @@ message LobbyReply {
 	repeated DurakNetPlayer enemyPlayers = 3;
 	repeated Card deckBox = 4;
 	Card trump = 5;
+}
+
+message DialogReply {
+	Dialog dialog = 1;
+	string username = 2;
 }
 
 message TurnReply {
@@ -155,4 +166,13 @@ enum Status {
 	canAttack = 1;
 	canDefence = 2;
 	canPass = 3;
+}
+
+enum Dialog {
+	Test1 = 0;
+	Test2 = 1;
+	Test3 = 2;
+	Test4 = 3;
+	Test5 = 4;
+	Test6 = 5;
 }

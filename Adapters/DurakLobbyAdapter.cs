@@ -16,6 +16,7 @@ namespace DurakServer.Adapters
         Task CreateLobby(Player player);
         Lobby GetLobby(int id);
         Lobby GetLobby(Player player);
+        Task HandleDialogMessage(Lobby lobby, Player senderPlayer, Dialog dialog);
         Task HandleTurn(Lobby lobby, Player player, Card card);
         Task HandleEndAttack(Lobby lobby, Player originalPlayer);
         Task HandleEndDefence(Lobby lobby);
@@ -267,6 +268,15 @@ namespace DurakServer.Adapters
                             break;
                         }
         }
+        public async Task HandleDialogMessage(Lobby lobby, Player senderPlayer, Dialog dialog)
+        {
+            var reply = new DurakReply
+            {
+                DialogReply = new DialogReply { Dialog = dialog, Username = senderPlayer.Username }
+            };
+
+            foreach (var player in lobby.Players) await player.DurakStreamReply.WriteAsync(reply);
+        }
         public async Task HandleTurn(Lobby lobby, Player senderPlayer, Card card)
         {
             var reply = new DurakReply
@@ -297,13 +307,13 @@ namespace DurakServer.Adapters
 
             senderPlayer.Hand.Remove(card);
 
-            if (lobby.EndAttackStep == 3) await HandleEndAttack(lobby, senderPlayer);
-
             if (lobby.DeckBox.ShuffledDeckList.Count == 0 && senderPlayer.Hand.Count == 0 && lobby.winners.Count() > 0 && lobby.TwoPlayersLeft == true)
             {
                 senderPlayer.Role = Role.Inactive;
                 await HandleGameEnd(lobby);
             }
+
+            if (lobby.EndAttackStep == 3) await HandleEndAttack(lobby, senderPlayer);
 
             // If player has no more cards, set him as an inactive
             if (lobby.DeckBox.ShuffledDeckList.Count == 0 && senderPlayer.Hand.Count == 0 && senderPlayer.Role == Role.Defender && lobby.TwoPlayersLeft == false)
