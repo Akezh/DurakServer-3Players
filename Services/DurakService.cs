@@ -35,7 +35,15 @@ namespace DurakServer.Services
                     case DurakRequest.RequestOneofCase.PlayRequest:
                     {
                         await durakLobbyAdapter.CreateLobby(player);
+                    } break;
+                    case DurakRequest.RequestOneofCase.DialogRequest:
+                    {
+                        var lobby = durakLobbyAdapter.GetLobby(player);
 
+                        if (lobby == null)
+                                new RpcException(new Grpc.Core.Status(new StatusCode(), "Лобби не найден"));
+
+                        await durakLobbyAdapter.HandleDialogMessage(lobby, player, currentMessage.DialogRequest.Dialog);
                     } break;
                     case DurakRequest.RequestOneofCase.TurnRequest:
                     {
