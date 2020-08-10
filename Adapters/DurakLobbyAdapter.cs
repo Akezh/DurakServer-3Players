@@ -310,7 +310,9 @@ namespace DurakServer.Adapters
             if (lobby.DeckBox.ShuffledDeckList.Count == 0 && senderPlayer.Hand.Count == 0 && lobby.winners.Count() > 0 && lobby.TwoPlayersLeft == true)
             {
                 senderPlayer.Role = Role.Inactive;
+                foreach (var player in lobby.Players) await player.DurakStreamReply.WriteAsync(reply);
                 await HandleGameEnd(lobby);
+                return;
             }
 
             if (lobby.EndAttackStep == 3) await HandleEndAttack(lobby, senderPlayer);
@@ -328,7 +330,16 @@ namespace DurakServer.Adapters
 
             SetActiveTimerPlayer(lobby);
 
-            foreach (var player in lobby.Players) await player.DurakStreamReply.WriteAsync(reply);
+            foreach (var player in lobby.Players) { 
+                try
+                {
+                    await player.DurakStreamReply.WriteAsync(reply);
+                } catch
+                {
+                    continue;
+                }
+               
+            }
         }
         public async Task HandleEndAttack(Lobby lobby, Player senderPlayer)
         {
@@ -742,8 +753,6 @@ namespace DurakServer.Adapters
             lobby.River.Attacker.Clear();
             lobby.River.Defender.Clear();
             lobby.River.Adder.Clear();
-
-            SetActiveTimerPlayer(lobby);
         }
         public void DefenderBeatsCards(Lobby lobby)
         {
@@ -764,8 +773,6 @@ namespace DurakServer.Adapters
 
             lobby.River.Attacker.Clear();
             lobby.River.Defender.Clear();
-
-            SetActiveTimerPlayer(lobby);
         }
         public void SetActiveTimerPlayer(Lobby lobby)
         {

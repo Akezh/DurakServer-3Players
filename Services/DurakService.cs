@@ -128,15 +128,15 @@ namespace DurakServer.Services
             {
                 while (!context.CancellationToken.IsCancellationRequested)
                 {
-
                     for (int i = 40; i > -2; i--)
                     {
-                        await Task.Delay(1000);
-                        
+                        await Task.Delay(500);
+
                         if (activeUsername.Equals(lobby.activeTimerPlayerUsername) && lobby.reactivateTimer == false)
                         {
                             await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.activeTimerPlayerUsername });
-                        } else
+                        }
+                        else if ((activeUsername.Equals(lobby.activeTimerPlayerUsername) && lobby.reactivateTimer == true) || (!activeUsername.Equals(lobby.activeTimerPlayerUsername)))
                         {
                             i = 40;
                             lobby.reactivateTimer = false;
@@ -144,8 +144,13 @@ namespace DurakServer.Services
                             await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.activeTimerPlayerUsername });
                             activeUsername = lobby.activeTimerPlayerUsername;
                         }
-                    }
 
+                        if (i < 0)
+                        {
+                            // Handle the end of the timer
+                            // Заканчивай игру
+                        }
+                    }
                 }
             }
             catch
@@ -153,6 +158,5 @@ namespace DurakServer.Services
                 //await EndLobbyWhenTimerProblem(lobby, client, mirrorClient);
             }
         }
-
     }
 }
