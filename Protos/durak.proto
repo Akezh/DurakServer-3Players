@@ -17,8 +17,6 @@ message DurakRequest {
 		EndAttackRequest endAttackRequest = 4;
 		EndDefenceRequest endDefenceRequest = 5;
 		EndAddingRequest endAddingRequest = 6;
-		FinishGameRoundRequest finishGameRoundRequest = 7;
-		EnableTwoPlayersModeRequest enableTwoPlayersModeRequest = 8;
 	}
 }
 
@@ -40,12 +38,6 @@ message EndDefenceRequest {
 }
 
 message EndAddingRequest {
-}
-
-message FinishGameRoundRequest {
-}
-
-message EnableTwoPlayersModeRequest {
 }
 
 message TimerRequest {

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Xml;
 using DurakServer.Helpers;
 using DurakServer.Models;
 using DurakServer.Providers;
@@ -348,7 +347,6 @@ namespace DurakServer.Adapters
                 {
                     await EnableTwoPlayersMode(senderPlayer);
                 }
-                //DefenderBeatsCards(senderPlayer);
             }
 
             if (lobby.River.Attacker.Count + lobby.River.Defender.Count == 12) await HandleFinishGameRound(senderPlayer);
@@ -438,7 +436,6 @@ namespace DurakServer.Adapters
                         break;
                     case 5:
                         {
-                            // updateInitialRoles, Defender successfully beats all cards: attacker -> waiter, defender -> attacker, waiter -> defender
                             await DefenderBeatsCards(senderPlayer);
                         }
                         break;
