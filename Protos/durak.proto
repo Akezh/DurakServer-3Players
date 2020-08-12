@@ -50,6 +50,7 @@ message EnableTwoPlayersModeRequest {
 
 message TimerRequest {
     int32 lobbyId = 1;
+	string username = 2;
 }
 
 message DurakReply {
@@ -109,8 +110,12 @@ message EnableTwoPlayersModeReply {
 }
 
 message GameEndReply {
-	DurakNetPlayer iPlayer = 1;
-	repeated DurakNetPlayer enemyPlayers = 2;
+	repeated WinnerPlayer winnerPlayers = 1;
+}
+
+message WinnerPlayer {
+	string username = 1;
+	int32 beetCount = 2;
 }
 
 message TimerReply {
@@ -156,9 +161,6 @@ enum Role {
 	Waiter = 3;
 	FormerAttacker = 4;
 	Inactive = 5;
-	FirstWinner = 6;
-	SecondWinner = 7;
-	ThirdWinner = 8;
 }
 
 enum Status {

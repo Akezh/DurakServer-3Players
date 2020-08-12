@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ namespace DurakServer.Providers
 {
     public interface IDurakLobbyProvider
     {
-        List<Lobby> Lobbies { get; }
+        BlockingCollection<Lobby> Lobbies { get; }
         List<Player> WaitList { get; }
     }
 
@@ -16,11 +17,11 @@ namespace DurakServer.Providers
     {
         public DurakLobbyProvider()
         {
-            Lobbies = new List<Lobby>();
+            Lobbies = new BlockingCollection<Lobby>();
             WaitList = new List<Player>();
         }
 
-        public List<Lobby> Lobbies { get; }
+        public BlockingCollection<Lobby> Lobbies { get; }
         public List<Player> WaitList { get; }
     }
 }
