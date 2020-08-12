@@ -52,10 +52,6 @@ namespace DurakServer.Services
                         break;
                     case DurakRequest.RequestOneofCase.EndAttackRequest:
                         {
-                            //var lobby = HandleThreadSafeLobby(durakLobbyAdapter.CheckLobby(player));
-                            //await durakLobbyAdapter.HandleEndAttack(lobby, player);
-                            //await OneOf(async delegate (Task) =>
-                            //durakLobbyAdapter.HandleEndAttack(lobby, player), player);
                             await durakLobbyAdapter.HandleEndAttack(player);
                         }
                         break;
