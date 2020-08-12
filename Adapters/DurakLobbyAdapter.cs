@@ -348,7 +348,6 @@ namespace DurakServer.Adapters
                 {
                     await EnableTwoPlayersMode(senderPlayer);
                 }
-                //DefenderBeatsCards(senderPlayer);
             }
 
             if (lobby.River.Attacker.Count + lobby.River.Defender.Count == 12) await HandleFinishGameRound(senderPlayer);

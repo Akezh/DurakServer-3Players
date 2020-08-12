@@ -69,17 +69,6 @@ namespace DurakServer.Services
                             await durakLobbyAdapter.HandleEndAdding(player);
                         }
                         break;
-                    case DurakRequest.RequestOneofCase.FinishGameRoundRequest:
-                        {
-                            await durakLobbyAdapter.HandleFinishGameRound(player);
-                        }
-                        break;
-                    case DurakRequest.RequestOneofCase.EnableTwoPlayersModeRequest:
-                        {
-                            await durakLobbyAdapter.EnableTwoPlayersMode(player);
-                        }
-                        break;
-
                 }
             }
         }
