@@ -8,14 +8,14 @@ namespace DurakServer.Models
     public class PlayerRoleTracker
     {
         public string Username;
-        public Role role;
+        public Role Role;
         public PlayerRoleTracker()
         {
         }
         public PlayerRoleTracker(string username, Role role)
         {
             Username = username;
-            this.role = role;
+            this.Role = role;
         }
     }
 }

@@ -120,7 +120,6 @@ namespace DurakServer.Adapters
             var minRankTrump = Rank.None;
             minRankTrump = (from player in players from card in player.Hand where card.Suit == trump.Suit select card.Rank).Min();
 
-            // Определяем у кого наименьший козырь
             if (minRankTrump == Rank.None)
             {
                 players[0].Role = Role.Attacker;
@@ -180,7 +179,7 @@ namespace DurakServer.Adapters
                         if (player.Username.Equals(initialPlayer.Username))
                         {
                             // The defence was successful since all 12 cards were in the river: attacker -> waiter, defender -> attacker, waiter -> defender
-                            switch (initialPlayer.role)
+                            switch (initialPlayer.Role)
                             {
                                 case Role.Attacker:
                                     if (areCardsBeatenSuccessfully) player.Role = Role.Waiter;
@@ -203,7 +202,7 @@ namespace DurakServer.Adapters
                         {
                             if (player.Role == Role.Inactive) continue;
 
-                            switch (initialPlayer.role)
+                            switch (initialPlayer.Role)
                             {
                                 case Role.Attacker:
                                     if (areCardsBeatenSuccessfully) player.Role = Role.Defender;
@@ -243,7 +242,7 @@ namespace DurakServer.Adapters
             var lobby = LobbyHelper.HandleThreadSafeLobby(senderPlayer, durakLobbyProvider);
 
             foreach (PlayerRoleTracker initialPlayer in lobby.initialRoundRoles)
-                if (initialPlayer.role == Role.Attacker)
+                if (initialPlayer.Role == Role.Attacker)
                     foreach (var player in lobby.Players)
                         if (player.Username.Equals(initialPlayer.Username))
                         {
@@ -252,7 +251,7 @@ namespace DurakServer.Adapters
                         }
 
             foreach (PlayerRoleTracker initialPlayer in lobby.initialRoundRoles)
-                if (initialPlayer.role == Role.Waiter)
+                if (initialPlayer.Role == Role.Waiter)
                     foreach (var player in lobby.Players)
                         if (player.Username.Equals(initialPlayer.Username))
                         {
@@ -261,7 +260,7 @@ namespace DurakServer.Adapters
                         }
 
             foreach (PlayerRoleTracker initialPlayer in lobby.initialRoundRoles)
-                if (initialPlayer.role == Role.Defender)
+                if (initialPlayer.Role == Role.Defender)
                     foreach (var player in lobby.Players)
                         if (player.Username.Equals(initialPlayer.Username))
                         {
