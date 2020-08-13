@@ -113,7 +113,6 @@ namespace DurakServer.Services
             catch
             {
                 await durakLobbyAdapter.HandleGameEnd(activeTimerPlayer, false);
-                return;
             }
         }
     }
