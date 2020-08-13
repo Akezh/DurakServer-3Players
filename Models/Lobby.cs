@@ -45,7 +45,7 @@ namespace DurakServer.Models
         public int EndAddingStep;
         public int PrevRiverCount;
         public bool TwoPlayersLeft;
-        public Player activeTimerPlayerUsername;
+        public Player activeTimerPlayer;
         public bool reactivateTimer;
 
         public void RemovePlayer(Player player)
@@ -55,7 +55,7 @@ namespace DurakServer.Models
 
         public void ClearPlayers()
         {
-            players.Clear();
+            players.Clear(); 
         }
     }
 }
