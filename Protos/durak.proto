@@ -163,10 +163,10 @@ enum Status {
 }
 
 enum Dialog {
-	Test1 = 0;
-	Test2 = 1;
-	Test3 = 2;
-	Test4 = 3;
-	Test5 = 4;
-	Test6 = 5;
+	Oi = 0;
+	Hi = 1;
+	NiceGame = 2;
+	GoodLuck = 3;
+	Hurry = 4;
+	CleverStep = 5;
 }

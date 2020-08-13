@@ -78,7 +78,7 @@ namespace DurakServer.Services
             {
                 while (!context.CancellationToken.IsCancellationRequested)
                 {
-                    for (int i = 8; i > -2; i--)
+                    for (int i = 40; i > -2; i--)
                     {
                         await Task.Delay(1000);
 
@@ -88,7 +88,7 @@ namespace DurakServer.Services
                         }
                         else if ((activeTimerPlayer.Equals(lobby.ActiveTimerPlayer) && lobby.ReactivateTimer == true) || (!activeTimerPlayer.Equals(lobby.ActiveTimerPlayer)))
                         {
-                            i = 8;
+                            i = 40;
                             lobby.ReactivateTimer = false;
 
                             await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.ActiveTimerPlayer.Username });
