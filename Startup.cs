@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using DurakServer.Adapters;
+﻿using DurakServer.Adapters;
 using DurakServer.Providers;
 using DurakServer.Services;
 using Microsoft.AspNetCore.Builder;

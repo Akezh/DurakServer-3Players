@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace DurakServer.Models
 {
@@ -28,7 +26,7 @@ namespace DurakServer.Models
         {
             foreach (PlayerRoleTracker player in RolesCollections)
                 if (player.Username.Equals(username))
-                    return player.role;
+                    return player.Role;
 
             return Role.Inactive;
         }
@@ -38,7 +36,7 @@ namespace DurakServer.Models
             {
                 if (player.Username.Equals(username))
                 {
-                    player.role = role;
+                    player.Role = role;
                     return;
                 }
             }

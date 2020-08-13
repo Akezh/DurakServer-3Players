@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DurakServer.Adapters;
@@ -7,7 +6,6 @@ using DurakServer.Helpers;
 using DurakServer.Models;
 using DurakServer.Providers;
 using Grpc.Core;
-using Microsoft.Extensions.Logging;
 
 namespace DurakServer.Services
 {
