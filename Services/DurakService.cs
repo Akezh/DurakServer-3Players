@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DurakServer.Adapters;
@@ -72,47 +71,49 @@ namespace DurakServer.Services
         public override async Task StartTimerStreaming(TimerRequest request, IServerStreamWriter<TimerReply> responseStream, ServerCallContext context)
         {
             var lobby = LobbyHelper.GetLobby(request.LobbyId, durakLobbyProvider);
-            Player activeTimerPlayer = lobby.activeTimerPlayerUsername;
+            Player activeTimerPlayer = lobby.ActiveTimerPlayer;
+            Player me = lobby.Players.FirstOrDefault(x => x.Username.Equals(request.Username));
 
             try
             {
                 while (!context.CancellationToken.IsCancellationRequested)
                 {
-                    for (int i = 1000; i > -2; i--)
+                    for (int i = 8; i > -2; i--)
                     {
                         await Task.Delay(1000);
 
-                        //if (activeTimerPlayer.Equals(lobby.activeTimerPlayerUsername) && lobby.reactivateTimer == false)
-                        //{
-                        //    await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.activeTimerPlayerUsername.Username });
-                        //}
-                        //else if ((activeTimerPlayer.Equals(lobby.activeTimerPlayerUsername) && lobby.reactivateTimer == true) || (!activeTimerPlayer.Equals(lobby.activeTimerPlayerUsername)))
-                        //{
-                        //    i = 40;
-                        //    lobby.reactivateTimer = false;
+                        if (activeTimerPlayer.Equals(lobby.ActiveTimerPlayer) && lobby.ReactivateTimer == false)
+                        {
+                            await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.ActiveTimerPlayer.Username });
+                        }
+                        else if ((activeTimerPlayer.Equals(lobby.ActiveTimerPlayer) && lobby.ReactivateTimer == true) || (!activeTimerPlayer.Equals(lobby.ActiveTimerPlayer)))
+                        {
+                            i = 8;
+                            lobby.ReactivateTimer = false;
 
-                        //    await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.activeTimerPlayerUsername.Username });
-                        //    activeTimerPlayer = lobby.activeTimerPlayerUsername;
-                        //}
+                            await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.ActiveTimerPlayer.Username });
+                            activeTimerPlayer = lobby.ActiveTimerPlayer;
+                        }
 
-                        //if (i < 0)
-                        //{
-                        //    await durakLobbyAdapter.HandleGameEnd(activeTimerPlayer, false);
-                        //    return;
-                        //}
+                        if (i < 0)
+                        {
+                            if (request.Username == activeTimerPlayer.Username)
+                            {
+                                lobby.RemovePlayer(me);
+                                await durakLobbyAdapter.HandleGameEnd(null, false, request.LobbyId);
+                                return;
+                            } else
+                            {
+                                return;
+                            }
+                        }
                     }
                 }
-            }
+            }   
             catch
-            {   
-                lobby.RemovePlayer(activeTimerPlayer);
+            {
                 await durakLobbyAdapter.HandleGameEnd(activeTimerPlayer, false);
-                //await EndLobbyWhenTimerProblem(lobby, client, mirrorClient);
             }
-
-
         }
-
-
     }
 }

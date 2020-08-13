@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DurakServer.Helpers;
 using DurakServer.Models;
 using DurakServer.Providers;
-using Google.Protobuf.Collections;
-using Grpc.Core;
-using Microsoft.AspNetCore.Connections.Features;
 
 namespace DurakServer.Adapters
 {
@@ -23,7 +17,7 @@ namespace DurakServer.Adapters
         Task HandleEndAdding(Player senderPlayer);
         Task HandleFinishGameRound(Player senderPlayer);
         Task EnableTwoPlayersMode(Player senderPlayer);
-        Task HandleGameEnd(Player senderPlayer, bool finishedByLogic);
+        Task HandleGameEnd(Player senderPlayer, bool finishedByLogic, int? lobbyId = null);
     }
 
     public class DurakLobbyAdapter : IDurakLobbyAdapter
@@ -70,7 +64,7 @@ namespace DurakServer.Adapters
 
             durakLobbyProvider.Lobbies.Add(lobby);
             SetDurakRoles(players, lobby);
-            //SetActiveTimerPlayer(lobby);
+            SetActiveTimerPlayer(lobby);
 
             return lobby;
         }
@@ -120,7 +114,6 @@ namespace DurakServer.Adapters
             var minRankTrump = Rank.None;
             minRankTrump = (from player in players from card in player.Hand where card.Suit == trump.Suit select card.Rank).Min();
 
-            // Определяем у кого наименьший козырь
             if (minRankTrump == Rank.None)
             {
                 players[0].Role = Role.Attacker;
@@ -171,7 +164,7 @@ namespace DurakServer.Adapters
         {
             var lobby = LobbyHelper.HandleThreadSafeLobby(senderPlayer, durakLobbyProvider);
 
-            foreach (PlayerRoleTracker initialPlayer in lobby.initialRoundRoles)
+            foreach (PlayerRoleTracker initialPlayer in lobby.InitialRoundRoles)
             {
                 foreach (var player in lobby.Players)
                 {
@@ -180,7 +173,7 @@ namespace DurakServer.Adapters
                         if (player.Username.Equals(initialPlayer.Username))
                         {
                             // The defence was successful since all 12 cards were in the river: attacker -> waiter, defender -> attacker, waiter -> defender
-                            switch (initialPlayer.role)
+                            switch (initialPlayer.Role)
                             {
                                 case Role.Attacker:
                                     if (areCardsBeatenSuccessfully) player.Role = Role.Waiter;
@@ -203,7 +196,7 @@ namespace DurakServer.Adapters
                         {
                             if (player.Role == Role.Inactive) continue;
 
-                            switch (initialPlayer.role)
+                            switch (initialPlayer.Role)
                             {
                                 case Role.Attacker:
                                     if (areCardsBeatenSuccessfully) player.Role = Role.Defender;
@@ -242,8 +235,8 @@ namespace DurakServer.Adapters
         {
             var lobby = LobbyHelper.HandleThreadSafeLobby(senderPlayer, durakLobbyProvider);
 
-            foreach (PlayerRoleTracker initialPlayer in lobby.initialRoundRoles)
-                if (initialPlayer.role == Role.Attacker)
+            foreach (PlayerRoleTracker initialPlayer in lobby.InitialRoundRoles)
+                if (initialPlayer.Role == Role.Attacker)
                     foreach (var player in lobby.Players)
                         if (player.Username.Equals(initialPlayer.Username))
                         {
@@ -251,8 +244,8 @@ namespace DurakServer.Adapters
                             break;
                         }
 
-            foreach (PlayerRoleTracker initialPlayer in lobby.initialRoundRoles)
-                if (initialPlayer.role == Role.Waiter)
+            foreach (PlayerRoleTracker initialPlayer in lobby.InitialRoundRoles)
+                if (initialPlayer.Role == Role.Waiter)
                     foreach (var player in lobby.Players)
                         if (player.Username.Equals(initialPlayer.Username))
                         {
@@ -260,8 +253,8 @@ namespace DurakServer.Adapters
                             break;
                         }
 
-            foreach (PlayerRoleTracker initialPlayer in lobby.initialRoundRoles)
-                if (initialPlayer.role == Role.Defender)
+            foreach (PlayerRoleTracker initialPlayer in lobby.InitialRoundRoles)
+                if (initialPlayer.Role == Role.Defender)
                     foreach (var player in lobby.Players)
                         if (player.Username.Equals(initialPlayer.Username))
                         {
@@ -293,10 +286,10 @@ namespace DurakServer.Adapters
             {
                 foreach (var player in lobby.Players)
                 {
-                    if (lobby.initialRoundRoles.ContainsKey(player.Username))
-                        lobby.initialRoundRoles.Update(player.Username, player.Role);
+                    if (lobby.InitialRoundRoles.ContainsKey(player.Username))
+                        lobby.InitialRoundRoles.Update(player.Username, player.Role);
                     else
-                        lobby.initialRoundRoles.Add(player.Username, player.Role);
+                        lobby.InitialRoundRoles.Add(player.Username, player.Role);
                 }
             }
 
@@ -312,7 +305,7 @@ namespace DurakServer.Adapters
 
             senderPlayer.Hand.Remove(card);
 
-            //SetActiveTimerPlayer(lobby);
+            SetActiveTimerPlayer(lobby);
 
             foreach (var player in lobby.Players)
             {
@@ -442,7 +435,7 @@ namespace DurakServer.Adapters
                 }
             }
 
-            //SetActiveTimerPlayer(lobby);
+            SetActiveTimerPlayer(lobby);
 
             foreach (var player in lobby.Players)
             {
@@ -486,7 +479,7 @@ namespace DurakServer.Adapters
 
             if (lobby.River.Attacker.Count == 6) DefenderTakesCards(senderPlayer);
 
-            //SetActiveTimerPlayer(lobby);
+            SetActiveTimerPlayer(lobby);
 
             foreach (var player in lobby.Players)
             {
@@ -551,7 +544,7 @@ namespace DurakServer.Adapters
                 }
             }
 
-            //SetActiveTimerPlayer(lobby);
+            SetActiveTimerPlayer(lobby);
 
             foreach (var player in lobby.Players)
             {
@@ -591,7 +584,7 @@ namespace DurakServer.Adapters
 
             await DefenderBeatsCards(senderPlayer);
 
-            //SetActiveTimerPlayer(lobby);
+            SetActiveTimerPlayer(lobby);
 
             foreach (var player in lobby.Players)
             {
@@ -663,13 +656,13 @@ namespace DurakServer.Adapters
             // Update initial roles for 2 players
             foreach (var player in lobby.Players)
             {
-                if (lobby.initialRoundRoles.ContainsKey(player.Username))
-                    lobby.initialRoundRoles.Update(player.Username, player.Role);
+                if (lobby.InitialRoundRoles.ContainsKey(player.Username))
+                    lobby.InitialRoundRoles.Update(player.Username, player.Role);
                 else
-                    lobby.initialRoundRoles.Add(player.Username, player.Role);
+                    lobby.InitialRoundRoles.Add(player.Username, player.Role);
             }
 
-            //SetActiveTimerPlayer(lobby);
+            SetActiveTimerPlayer(lobby);
 
             foreach (var player in lobby.Players)
             {
@@ -725,12 +718,14 @@ namespace DurakServer.Adapters
 
             lobby.RemovePlayer(senderPlayer);
         }
-        public async Task HandleGameEnd(Player senderPlayer, bool finishedByLogic)
+        public async Task HandleGameEnd(Player senderPlayer, bool finishedByLogic, int? lobbyId = null)
         {
-            var lobby = LobbyHelper.HandleThreadSafeLobby(senderPlayer, durakLobbyProvider);
+            var lobby = lobbyId.HasValue 
+                ? LobbyHelper.GetLobby(lobbyId.Value, durakLobbyProvider) 
+                : LobbyHelper.HandleThreadSafeLobby(senderPlayer, durakLobbyProvider);
 
             var reply = new DurakReply { GameEndReply = new GameEndReply { } };
-            List<WinnerPlayer> winners = new List<WinnerPlayer>();
+            var winners = new List<WinnerPlayer>();
 
             if (finishedByLogic)
             {
@@ -750,34 +745,36 @@ namespace DurakServer.Adapters
                     }
                     winners.Add(winner);
                 }
-
-                reply.GameEndReply.WinnerPlayers.AddRange(winners);
             }
             else
             {
-
-                // У одного таймер закончился (Он специально в приложении не нажимал на карты или вышел из bitspace games)
-                // Двое еще не закончили играть, то им обоим по 9 битов
-                if (lobby.Players.Count() == 2)
+                switch (lobby.Players.Count())
                 {
-                    foreach (var player in lobby.Players)
+                    // 1 Игрок ранее уже выиграл. А когда вы играли 1 на 1, у 1 игрока закончился таймер
+                    case 2:
                     {
-                        WinnerPlayer winner = new WinnerPlayer() { Username = player.Username, BeetCount = 9 };
-                        winners.Add(winner);
+                        foreach (var player in lobby.Players)
+                        {
+                            WinnerPlayer winner = new WinnerPlayer() { Username = player.Username, BeetCount = 9 };
+                            winners.Add(winner);
+                        }
+
+                        break;
                     }
-                }
-                // 1 Игрок ранее уже выиграл. А когда вы играли 1 на 1, у 1 игрока закончился таймер
-                else if (lobby.Players.Count() == 1)
-                {
-                    WinnerPlayer winner = new WinnerPlayer() { Username = lobby.Players.First().Username, BeetCount = 8 };
-                    winners.Add(winner);
-                }
-                else
-                {
-                    // 
+                    case 1:
+                    {
+                        foreach (var player in lobby.Players)
+                        {
+                            WinnerPlayer winner = new WinnerPlayer() { Username = player.Username, BeetCount = 8 };
+                            winners.Add(winner);
+                        }
+
+                        break;
+                    }
                 }
             }
 
+            reply.GameEndReply.WinnerPlayers.AddRange(winners);
             foreach (var player in lobby.Players) await player.DurakStreamReply.WriteAsync(reply);
             lobby.ClearPlayers();
         }
@@ -830,18 +827,18 @@ namespace DurakServer.Adapters
         }
         public void SetActiveTimerPlayer(Lobby lobby)
         {
-            Player formerActiveTimerPlayer = lobby.activeTimerPlayerUsername;
+            Player formerActiveTimerPlayer = lobby.ActiveTimerPlayer;
 
             foreach (var player in lobby.Players)
             {
                 if (player.Role == Role.Adder)
                 {
                     if (!player.Username.Equals(formerActiveTimerPlayer))
-                        lobby.reactivateTimer = false;
+                        lobby.ReactivateTimer = false;
                     else
-                        lobby.reactivateTimer = true;
+                        lobby.ReactivateTimer = true;
 
-                    lobby.activeTimerPlayerUsername = player;
+                    lobby.ActiveTimerPlayer = player;
 
                     return;
                 }
@@ -854,11 +851,11 @@ namespace DurakServer.Adapters
                     if (player.Role == Role.Attacker)
                     {
                         if (!player.Username.Equals(formerActiveTimerPlayer))
-                            lobby.reactivateTimer = false;
+                            lobby.ReactivateTimer = false;
                         else
-                            lobby.reactivateTimer = true;
+                            lobby.ReactivateTimer = true;
 
-                        lobby.activeTimerPlayerUsername = player;
+                        lobby.ActiveTimerPlayer = player;
                         return;
                     }
                 }
@@ -870,11 +867,11 @@ namespace DurakServer.Adapters
                     if (player.Role == Role.Defender)
                     {
                         if (!player.Username.Equals(formerActiveTimerPlayer))
-                            lobby.reactivateTimer = false;
+                            lobby.ReactivateTimer = false;
                         else
-                            lobby.reactivateTimer = true;
+                            lobby.ReactivateTimer = true;
 
-                        lobby.activeTimerPlayerUsername = player;
+                        lobby.ActiveTimerPlayer = player;
                         return;
                     }
                 }
