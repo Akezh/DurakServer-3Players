@@ -71,7 +71,7 @@ namespace DurakServer.Services
         public override async Task StartTimerStreaming(TimerRequest request, IServerStreamWriter<TimerReply> responseStream, ServerCallContext context)
         {
             var lobby = LobbyHelper.GetLobby(request.LobbyId, durakLobbyProvider);
-            Player activeTimerPlayer = lobby.activeTimerPlayer;
+            Player activeTimerPlayer = lobby.ActiveTimerPlayer;
             Player me = lobby.Players.FirstOrDefault(x => x.Username.Equals(request.Username));
 
             try
@@ -82,17 +82,17 @@ namespace DurakServer.Services
                     {
                         await Task.Delay(1000);
 
-                        if (activeTimerPlayer.Equals(lobby.activeTimerPlayer) && lobby.reactivateTimer == false)
+                        if (activeTimerPlayer.Equals(lobby.ActiveTimerPlayer) && lobby.ReactivateTimer == false)
                         {
-                            await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.activeTimerPlayer.Username });
+                            await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.ActiveTimerPlayer.Username });
                         }
-                        else if ((activeTimerPlayer.Equals(lobby.activeTimerPlayer) && lobby.reactivateTimer == true) || (!activeTimerPlayer.Equals(lobby.activeTimerPlayer)))
+                        else if ((activeTimerPlayer.Equals(lobby.ActiveTimerPlayer) && lobby.ReactivateTimer == true) || (!activeTimerPlayer.Equals(lobby.ActiveTimerPlayer)))
                         {
                             i = 8;
-                            lobby.reactivateTimer = false;
+                            lobby.ReactivateTimer = false;
 
-                            await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.activeTimerPlayer.Username });
-                            activeTimerPlayer = lobby.activeTimerPlayer;
+                            await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.ActiveTimerPlayer.Username });
+                            activeTimerPlayer = lobby.ActiveTimerPlayer;
                         }
 
                         if (i < 0)

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace DurakServer.Models
 {
@@ -28,25 +25,25 @@ namespace DurakServer.Models
             Id = 0;
             DeckBox = new DeckBox();
             River = new River();
-            initialRoundRoles = new RolesCollection();
+            InitialRoundRoles = new RolesCollection();
             EndAttackStep = 1;
             EndAddingStep = 1;
             PrevRiverCount = 0;
             TwoPlayersLeft = false;
-            reactivateTimer = false;
+            ReactivateTimer = false;
             players = new ConcurrentDictionary<string, Player>();
         }
 
         public int Id { get; set; }
         public DeckBox DeckBox { get; }
         public River River { get; set; }
-        public RolesCollection initialRoundRoles { get; set; }
+        public RolesCollection InitialRoundRoles { get; set; }
         public int EndAttackStep;
         public int EndAddingStep;
         public int PrevRiverCount;
         public bool TwoPlayersLeft;
-        public Player activeTimerPlayer;
-        public bool reactivateTimer;
+        public Player ActiveTimerPlayer;
+        public bool ReactivateTimer;
 
         public void RemovePlayer(Player player)
         {

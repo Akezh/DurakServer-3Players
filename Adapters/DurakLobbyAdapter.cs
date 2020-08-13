@@ -164,7 +164,7 @@ namespace DurakServer.Adapters
         {
             var lobby = LobbyHelper.HandleThreadSafeLobby(senderPlayer, durakLobbyProvider);
 
-            foreach (PlayerRoleTracker initialPlayer in lobby.initialRoundRoles)
+            foreach (PlayerRoleTracker initialPlayer in lobby.InitialRoundRoles)
             {
                 foreach (var player in lobby.Players)
                 {
@@ -235,7 +235,7 @@ namespace DurakServer.Adapters
         {
             var lobby = LobbyHelper.HandleThreadSafeLobby(senderPlayer, durakLobbyProvider);
 
-            foreach (PlayerRoleTracker initialPlayer in lobby.initialRoundRoles)
+            foreach (PlayerRoleTracker initialPlayer in lobby.InitialRoundRoles)
                 if (initialPlayer.Role == Role.Attacker)
                     foreach (var player in lobby.Players)
                         if (player.Username.Equals(initialPlayer.Username))
@@ -244,7 +244,7 @@ namespace DurakServer.Adapters
                             break;
                         }
 
-            foreach (PlayerRoleTracker initialPlayer in lobby.initialRoundRoles)
+            foreach (PlayerRoleTracker initialPlayer in lobby.InitialRoundRoles)
                 if (initialPlayer.Role == Role.Waiter)
                     foreach (var player in lobby.Players)
                         if (player.Username.Equals(initialPlayer.Username))
@@ -253,7 +253,7 @@ namespace DurakServer.Adapters
                             break;
                         }
 
-            foreach (PlayerRoleTracker initialPlayer in lobby.initialRoundRoles)
+            foreach (PlayerRoleTracker initialPlayer in lobby.InitialRoundRoles)
                 if (initialPlayer.Role == Role.Defender)
                     foreach (var player in lobby.Players)
                         if (player.Username.Equals(initialPlayer.Username))
@@ -286,10 +286,10 @@ namespace DurakServer.Adapters
             {
                 foreach (var player in lobby.Players)
                 {
-                    if (lobby.initialRoundRoles.ContainsKey(player.Username))
-                        lobby.initialRoundRoles.Update(player.Username, player.Role);
+                    if (lobby.InitialRoundRoles.ContainsKey(player.Username))
+                        lobby.InitialRoundRoles.Update(player.Username, player.Role);
                     else
-                        lobby.initialRoundRoles.Add(player.Username, player.Role);
+                        lobby.InitialRoundRoles.Add(player.Username, player.Role);
                 }
             }
 
@@ -656,10 +656,10 @@ namespace DurakServer.Adapters
             // Update initial roles for 2 players
             foreach (var player in lobby.Players)
             {
-                if (lobby.initialRoundRoles.ContainsKey(player.Username))
-                    lobby.initialRoundRoles.Update(player.Username, player.Role);
+                if (lobby.InitialRoundRoles.ContainsKey(player.Username))
+                    lobby.InitialRoundRoles.Update(player.Username, player.Role);
                 else
-                    lobby.initialRoundRoles.Add(player.Username, player.Role);
+                    lobby.InitialRoundRoles.Add(player.Username, player.Role);
             }
 
             SetActiveTimerPlayer(lobby);
@@ -827,18 +827,18 @@ namespace DurakServer.Adapters
         }
         public void SetActiveTimerPlayer(Lobby lobby)
         {
-            Player formerActiveTimerPlayer = lobby.activeTimerPlayer;
+            Player formerActiveTimerPlayer = lobby.ActiveTimerPlayer;
 
             foreach (var player in lobby.Players)
             {
                 if (player.Role == Role.Adder)
                 {
                     if (!player.Username.Equals(formerActiveTimerPlayer))
-                        lobby.reactivateTimer = false;
+                        lobby.ReactivateTimer = false;
                     else
-                        lobby.reactivateTimer = true;
+                        lobby.ReactivateTimer = true;
 
-                    lobby.activeTimerPlayer = player;
+                    lobby.ActiveTimerPlayer = player;
 
                     return;
                 }
@@ -851,11 +851,11 @@ namespace DurakServer.Adapters
                     if (player.Role == Role.Attacker)
                     {
                         if (!player.Username.Equals(formerActiveTimerPlayer))
-                            lobby.reactivateTimer = false;
+                            lobby.ReactivateTimer = false;
                         else
-                            lobby.reactivateTimer = true;
+                            lobby.ReactivateTimer = true;
 
-                        lobby.activeTimerPlayer = player;
+                        lobby.ActiveTimerPlayer = player;
                         return;
                     }
                 }
@@ -867,11 +867,11 @@ namespace DurakServer.Adapters
                     if (player.Role == Role.Defender)
                     {
                         if (!player.Username.Equals(formerActiveTimerPlayer))
-                            lobby.reactivateTimer = false;
+                            lobby.ReactivateTimer = false;
                         else
-                            lobby.reactivateTimer = true;
+                            lobby.ReactivateTimer = true;
 
-                        lobby.activeTimerPlayer = player;
+                        lobby.ActiveTimerPlayer = player;
                         return;
                     }
                 }
