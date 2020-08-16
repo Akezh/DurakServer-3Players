@@ -168,5 +168,5 @@ enum Dialog {
 	NiceGame = 2;
 	GoodLuck = 3;
 	Hurry = 4;
-	CleverStep = 5;
+	Thanks = 5;
 }
