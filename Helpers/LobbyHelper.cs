@@ -34,10 +34,8 @@ namespace DurakServer.Helpers
             {
                 return tuple.Item2;
             }
-            else
-            {
-                throw new RpcException(new Grpc.Core.Status(new StatusCode(), "Лобби не найдено"));
-            }
+
+            throw new RpcException(new Grpc.Core.Status(new StatusCode(), "Лобби не найдено"));
         }
     }
 }

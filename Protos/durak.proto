@@ -103,6 +103,7 @@ message EnableTwoPlayersModeReply {
 
 message GameEndReply {
 	repeated WinnerPlayer winnerPlayers = 1;
+	string winMessage = 2;
 }
 
 message WinnerPlayer {
