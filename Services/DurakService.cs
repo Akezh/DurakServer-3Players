@@ -78,15 +78,22 @@ namespace DurakServer.Services
             {
                 while (!context.CancellationToken.IsCancellationRequested)
                 {
+                    var timerEnded = false;
                     for (int i = 40; i > -2; i--)
                     {
                         await Task.Delay(1000);
+                        if (!lobby.Players.Contains(me))
+                        {
+                            timerEnded = true;
+                            break;
+                        }
 
                         if (activeTimerPlayer.Equals(lobby.ActiveTimerPlayer) && lobby.ReactivateTimer == false)
                         {
                             await responseStream.WriteAsync(new TimerReply { Time = i, Username = lobby.ActiveTimerPlayer.Username });
                         }
-                        else if ((activeTimerPlayer.Equals(lobby.ActiveTimerPlayer) && lobby.ReactivateTimer == true) || (!activeTimerPlayer.Equals(lobby.ActiveTimerPlayer)))
+                        else if (activeTimerPlayer.Equals(lobby.ActiveTimerPlayer) && lobby.ReactivateTimer 
+                                 || !activeTimerPlayer.Equals(lobby.ActiveTimerPlayer))
                         {
                             i = 40;
                             lobby.ReactivateTimer = false;
@@ -99,21 +106,24 @@ namespace DurakServer.Services
                         {
                             if (request.Username == activeTimerPlayer.Username)
                             {
-                                lobby.RemovePlayer(me);
-                                await durakLobbyAdapter.HandleGameEnd(null, false, request.LobbyId);
-                                return;
-                            } else
-                            {
+                                await durakLobbyAdapter.HandleGameEnd(me, false, request.LobbyId);
                                 return;
                             }
+
+                            return;
                         }
                     }
+
+                    if (timerEnded)
+                        break;
                 }
             }   
             catch
             {
-                await durakLobbyAdapter.HandleGameEnd(activeTimerPlayer, false);
+                await durakLobbyAdapter.HandleGameEnd(me, false);
+                return;
             }
+            await durakLobbyAdapter.HandleGameEnd(me, false);
         }
     }
 }

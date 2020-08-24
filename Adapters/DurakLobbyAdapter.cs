@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DurakServer.Helpers;
 using DurakServer.Models;
 using DurakServer.Providers;
+using Grpc.Core;
 
 namespace DurakServer.Adapters
 {
@@ -712,6 +714,7 @@ namespace DurakServer.Adapters
                 GameEndReply = new GameEndReply { }
             };
             DurakGameEndReply.GameEndReply.WinnerPlayers.AddRange(winners);
+            DurakGameEndReply.GameEndReply.WinMessage = "Поздравляю, вы выиграли 10 битов!";
 
             foreach (var player in lobby.Players)
                 await player.DurakStreamReply.WriteAsync(DurakGameEndReply);
@@ -723,13 +726,16 @@ namespace DurakServer.Adapters
             var lobby = lobbyId.HasValue 
                 ? LobbyHelper.GetLobby(lobbyId.Value, durakLobbyProvider) 
                 : LobbyHelper.HandleThreadSafeLobby(senderPlayer, durakLobbyProvider);
+            
+            if(lobby == null)
+                throw new RpcException(new Grpc.Core.Status(StatusCode.Aborted, "Лобби не найдено"));
 
             var reply = new DurakReply { GameEndReply = new GameEndReply { } };
             var winners = new List<WinnerPlayer>();
 
             if (finishedByLogic)
             {
-
+                reply.GameEndReply.WinMessage = $"Поздравляю, вы выиграли ";
                 foreach (var player in lobby.Players)
                 {
                     WinnerPlayer winner = new WinnerPlayer();
@@ -748,9 +754,11 @@ namespace DurakServer.Adapters
             }
             else
             {
+                reply.GameEndReply.WinMessage = $"Вы выиграли в связи потери соединения с игроком {senderPlayer.Username}";
+                lobby.RemovePlayer(senderPlayer);
+
                 switch (lobby.Players.Count())
                 {
-                    // 1 Игрок ранее уже выиграл. А когда вы играли 1 на 1, у 1 игрока закончился таймер
                     case 2:
                     {
                         foreach (var player in lobby.Players)
@@ -775,8 +783,21 @@ namespace DurakServer.Adapters
             }
 
             reply.GameEndReply.WinnerPlayers.AddRange(winners);
-            foreach (var player in lobby.Players) await player.DurakStreamReply.WriteAsync(reply);
+            foreach (var player in lobby.Players)
+            {
+                try
+                {
+                    if(player.DurakStreamReply != null)
+                        await player.DurakStreamReply.WriteAsync(reply);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
             lobby.ClearPlayers();
+
         }
         public void DefenderTakesCards(Player senderPlayer)
         {

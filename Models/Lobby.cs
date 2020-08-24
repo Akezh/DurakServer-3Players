@@ -1,22 +1,20 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DurakServer.Models
 {
     public class Lobby
     {
-        private ConcurrentDictionary<string, Player> players;
+        private readonly ConcurrentDictionary<string, Player> _players;
         public IEnumerable<Player> Players
         {
-            get
-            {
-                return players.Values;
-            }
+            get => _players.Values.ToList();
             set
             {
                 foreach (var player in value)
                 {
-                    players.TryAdd(player.Username, player);
+                    _players.TryAdd(player.Username, player);
                 }
             }
         }
@@ -31,7 +29,7 @@ namespace DurakServer.Models
             PrevRiverCount = 0;
             TwoPlayersLeft = false;
             ReactivateTimer = false;
-            players = new ConcurrentDictionary<string, Player>();
+            _players = new ConcurrentDictionary<string, Player>();
         }
 
         public int Id { get; set; }
@@ -47,12 +45,12 @@ namespace DurakServer.Models
 
         public void RemovePlayer(Player player)
         {
-            players.TryRemove(player.Username, out _);
+            _players.TryRemove(player.Username, out _);
         }
 
         public void ClearPlayers()
         {
-            players.Clear(); 
+            _players.Clear(); 
         }
     }
 }
