@@ -5,7 +5,7 @@ Backend server for the multiplayer online card game "Durak," developed using **C
 ![Durak](https://github.com/user-attachments/assets/bd56973c-4fc5-4603-ae0a-21ea2ddc2638)
 
 ## Client project (Unity)
-- Visit https://github.com/Akezh/DurakClient-3Players/tree/main
+- Visit https://github.com/Akezh/DurakClient-3Players
 
 ## Key Features
 
